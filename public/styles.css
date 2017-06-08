@@ -1,0 +1,28 @@
+body {
+  background: #333;
+  color: #ddd;
+  font-family: 'Roboto';
+  text-align: center;
+}
+
+h1 {
+  margin: 20px 0 10px;
+}
+
+p {
+  margin: 0 0 40px;
+}
+
+canvas {
+  background: #000;
+  margin: 0 auto;
+  height: 400px;
+  width: 400px;
+}
+
+@media (max-device-width: 400px) {
+  canvas {
+    height: 200px;
+    width: 200px;
+  }
+}

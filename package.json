@@ -1,0 +1,28 @@
+{
+  "name": "webgl-environment-mapping",
+  "version": "1.0.0",
+  "description": "My own implementation of dynamic reflections using environment mapping in WebGL",
+  "main": "bin/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node bin"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DCtheTall/webgl-environment-mapping.git"
+  },
+  "author": "Dylan Cutler",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DCtheTall/webgl-environment-mapping/issues"
+  },
+  "homepage": "https://github.com/DCtheTall/webgl-environment-mapping#readme",
+  "devDependencies": {
+    "source-map-loader": "^0.2.1",
+    "ts-loader": "^2.1.0",
+    "typescript": "^2.3.4"
+  },
+  "dependencies": {
+    "axios": "^0.16.2"
+  }
+}
