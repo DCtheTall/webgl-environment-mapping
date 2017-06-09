@@ -4,6 +4,7 @@
     "sourceMap": true,
     "noImplicitAny": true,
     "module": "commonjs",
+    "moduleResolution": "node",
     "target": "es5"
   },
   "exclude": ["/node_modules/"],

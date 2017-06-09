@@ -1,7 +1,6 @@
 {
   "name": "webgl-environment-mapping",
-  "dependencies": {},
-  "globalDependencies": {
-    "axios": "registry:dt/axios#0.9.1+20161016142654"
+  "dependencies": {
+    "bluebird": "registry:npm/bluebird#3.5.0+20170314181206"
   }
 }
