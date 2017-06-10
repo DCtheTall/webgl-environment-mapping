@@ -1,5 +1,6 @@
-import Model from './Model';
+import Scene from './Scene';
 
-const teapot = new Model();
+const canvas = <HTMLCanvasElement>document.getElementById('webgl-canvas');
 
-teapot.loadOBJFile('/teapot.obj');
+const scene = new Scene(canvas);
+console.log(scene.camera);
