@@ -1,13 +1,15 @@
 {
   "compilerOptions": {
-    "outDir": "./dist",
+    "outDir": "./public",
     "sourceMap": true,
     "noImplicitAny": true,
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "es5"
   },
-  "exclude": ["/node_modules/"],
+  "exclude": [
+    "node_modules/"
+  ],
   "files": [
     "src/main.ts"
   ]

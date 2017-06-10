@@ -1,3 +1,5 @@
 import Model from './Model';
 
-console.log(Model);
+const teapot = new Model();
+
+teapot.loadOBJFile('/teapot.obj');

@@ -2,7 +2,7 @@ module.exports = {
   entry: './src/main.ts',
   output: { filename: './public/bundle.js' },
   resolve: {
-    extensions: ['.ts'],
+    extensions: ['.ts', '.js', '.d.ts'],
   },
   module: {
     loaders: [

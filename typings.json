@@ -1,6 +1,6 @@
 {
-  "name": "webgl-environment-mapping",
-  "dependencies": {
-    "bluebird": "registry:npm/bluebird#3.5.0+20170314181206"
+  "globalDependencies": {
+    "node": "registry:dt/node#6.0.0+20160906151955",
+    "require": "registry:dt/require#2.1.20+20160316155526"
   }
 }
