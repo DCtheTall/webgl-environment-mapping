@@ -5,7 +5,7 @@ import {
 
 export default class Camera {
   private _ASPECT_RATIO: number = 1;
-  private _FOVY: number = Math.PI / 2;
+  private _FOVY: number = Math.PI / 3;
   private _NEAR: number = 1e-2;
   private _FAR: number = 1e4;
 
@@ -13,14 +13,14 @@ export default class Camera {
   public eye: vec3;
   public up: vec3;
 
-  public perspective: mat4;
+  public perspectiveMat: mat4;
 
   constructor() {
-    this.at = vec3.fromValues(0, 0, -1);
-    this.eye = vec3.fromValues(0, 0, 1);
+    this.at = vec3.fromValues(0, 0, -10);
+    this.eye = vec3.fromValues(0, 0, 2);
     this.up = vec3.fromValues(0, 1, 0);
 
-    this.perspective = mat4.perspective(mat4.create(), this._ASPECT_RATIO, this._FOVY, this._NEAR, this._FAR);
+    this.perspectiveMat = mat4.perspective(mat4.create(), this._ASPECT_RATIO, this._FOVY, this._NEAR, this._FAR);
   }
 
   public setAt(x: number, y: number, z: number): void {

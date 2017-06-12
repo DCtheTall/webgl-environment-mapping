@@ -7,12 +7,12 @@ import {
 } from 'gl-matrix';
 
 export default class Model {
-  public normals: number[];
-  public vertices: number[];
-  public UVs: number[];
-  public normalIndices: number[];
-  public vertexIndices: number[];
-  public UVIndices: number[];
+  public vertices: Float32Array;
+  public normals: Float32Array;
+  public UVs: Float32Array;
+  public normalIndices: Uint16Array;
+  public vertexIndices: Uint16Array;
+  public UVIndices: Uint16Array;
 
   private position: vec3;
   private polarAngle: number;
@@ -33,12 +33,12 @@ export default class Model {
 
         objJson = ParseWavefrontObj(res.data);
 
-        this.vertices = objJson.vertex;
-        this.normals = objJson.normal;
-        this.UVs = objJson.uv;
-        this.vertexIndices = objJson.vertexIndex;
-        this.normalIndices = objJson.normalIndex;
-        this.UVIndices = objJson.uvIndex;
+        this.vertices = new Float32Array(objJson.vertex);
+        this.normals = new Float32Array(objJson.normal);
+        this.UVs = new Float32Array(objJson.uv);
+        this.vertexIndices = new Uint16Array(objJson.vertexIndex.filter((i: number) => i >= 0));
+        this.normalIndices = new Uint16Array(objJson.normalIndex);
+        this.UVIndices = new Uint16Array(objJson.uvIndex);
 
         return BluebirdPromise.resolve();
       })
