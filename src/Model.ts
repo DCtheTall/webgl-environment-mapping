@@ -15,14 +15,14 @@ export default class Model {
   public UVIndices: Uint16Array;
 
   private position: vec3;
-  private polarAngle: number;
 
-  public modelMat: mat4;
+  private rotationMatrix: mat4;
+  private translationMatrix: mat4;
 
   constructor() {
     this.position = vec3.fromValues(0, 0, 0);
-    this.polarAngle = 0;
-    this.modelMat = mat4.create();
+    this.rotationMatrix = mat4.create();
+    this.translationMatrix = mat4.create();
   }
 
   public loadOBJFile(url: string): Promise<void> {
@@ -43,5 +43,31 @@ export default class Model {
         return BluebirdPromise.resolve();
       })
       .catch(console.error);
+  }
+
+  public translate(_dx: number | vec3, dy: number, dz: number): void {
+    if (typeof _dx === 'number') {
+      let dx: number;
+
+      dx = <number>_dx;
+      this.position = vec3.add(vec3.create(), vec3.fromValues(dx, dy, dz), this.position);
+    } else {
+      this.position = vec3.add(vec3.create(), _dx, this.position);
+    }
+  }
+
+  public rotate(rad: number, axis: vec3): void {
+    this.rotationMatrix = mat4.fromRotation(this.rotationMatrix, rad, axis);
+  }
+
+  public modelMat(): mat4 {
+    return mat4.multiply(mat4.create(), this.translationMatrix, this.rotationMatrix);
+  }
+
+  public normalMatrix(): mat4 {
+    let invertedModelMat: mat4;
+
+    invertedModelMat = mat4.invert(mat4.create(), this.modelMat());
+    return mat4.transpose(mat4.create(), invertedModelMat);
   }
 }

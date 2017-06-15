@@ -104,7 +104,7 @@ export default class Scene {
     let perspectiveMat: WebGLUniformLocation;
 
     modelMat = this.gl.getUniformLocation(this.envShaderProgram, 'modelMat');
-    this.gl.uniformMatrix4fv(modelMat, false, model.modelMat);
+    this.gl.uniformMatrix4fv(modelMat, false, model.modelMat());
 
     viewMat = this.gl.getUniformLocation(this.envShaderProgram, 'viewMat');
     this.gl.uniformMatrix4fv(viewMat, false, this.camera.getLookAt());
