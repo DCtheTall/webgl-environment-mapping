@@ -5,6 +5,7 @@ import {
   vec3,
   mat4,
 } from 'gl-matrix';
+import * as OBJ from 'webgl-obj-loader';
 
 export default class Model {
   public vertices: Float32Array;
@@ -29,16 +30,14 @@ export default class Model {
     return axios
       .get(url)
       .then((res: AxiosResponse) => {
-        let objJson: ParseWavefrontObj.ResultJSON;
+        let model: OBJ.Mesh;
 
-        objJson = ParseWavefrontObj(res.data);
-
-        this.vertices = new Float32Array(objJson.vertex);
-        this.normals = new Float32Array(objJson.normal);
-        this.UVs = new Float32Array(objJson.uv);
-        this.vertexIndices = new Uint16Array(objJson.vertexIndex.filter((i: number) => i >= 0));
-        this.normalIndices = new Uint16Array(objJson.normalIndex);
-        this.UVIndices = new Uint16Array(objJson.uvIndex);
+        model = new OBJ.Mesh(res.data);
+        this.vertices = new Float32Array(model.vertices);
+        this.normals = new Float32Array(model.vertexNormals);
+        this.vertexIndices = new Uint16Array(model.indices);
+        this.normalIndices = new Uint16Array(model.indices);
+        // this.UVIndices = new Uint16Array(objJson.uvIndex.filter((i: number) => i >= 0));
 
         return BluebirdPromise.resolve();
       })
@@ -64,7 +63,7 @@ export default class Model {
     return mat4.multiply(mat4.create(), this.translationMatrix, this.rotationMatrix);
   }
 
-  public normalMatrix(): mat4 {
+  public normalMat(): mat4 {
     let invertedModelMat: mat4;
 
     invertedModelMat = mat4.invert(mat4.create(), this.modelMat());

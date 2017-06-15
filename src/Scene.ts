@@ -13,7 +13,16 @@ export default class Scene {
   private vertexBuffer: WebGLBuffer;
   private vertexIndicesBuffer: WebGLBuffer;
 
+  private normalBuffer: WebGLBuffer;
+  private normalIndexBuffer: WebGLBuffer;
+
   constructor(canvas: HTMLCanvasElement) {
+    let sideLength: number;
+
+    sideLength = window.innerWidth >= 400 ? 400 : 200;
+    canvas.width = sideLength;
+    canvas.height = sideLength;
+
     this.gl = <WebGLRenderingContext>(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
     this.gl.viewport(0, 0, canvas.width, canvas.height);
     this.gl.clearColor(0, 0, 0, 0);
@@ -25,6 +34,9 @@ export default class Scene {
 
     this.vertexBuffer = this.gl.createBuffer();
     this.vertexIndicesBuffer = this.gl.createBuffer();
+
+    this.normalBuffer = this.gl.createBuffer();
+    this.normalIndexBuffer = this.gl.createBuffer();
   }
 
   private compileShader(shaderSource: string, shaderType: number): WebGLShader {
@@ -37,6 +49,7 @@ export default class Scene {
 
     if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
       console.error(`Shader failed to compile: ${this.gl.getShaderInfoLog(shader)}`);
+      console.log('Shader code:', shaderSource);
       return null;
     }
 
@@ -86,8 +99,10 @@ export default class Scene {
 
   private sendEnvAttributeData(model: Model) {
     let aPosition: number;
+    let aNormal: number;
 
     aPosition = this.gl.getAttribLocation(this.envShaderProgram, 'a_Position');
+    aNormal = this.gl.getAttribLocation(this.envShaderProgram, 'a_Normal');
 
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
     this.gl.vertexAttribPointer(aPosition, 3, this.gl.FLOAT, false, 0, 0);
@@ -96,15 +111,27 @@ export default class Scene {
 
     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.vertexIndicesBuffer);
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, model.vertexIndices, this.gl.DYNAMIC_DRAW);
+
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.normalBuffer);
+    this.gl.vertexAttribPointer(aNormal, 3, this.gl.FLOAT, false, 0, 0);
+    this.gl.enableVertexAttribArray(aNormal);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, model.normals, this.gl.DYNAMIC_DRAW);
+
+    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.normalIndexBuffer);
+    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, model.normalIndices, this.gl.DYNAMIC_DRAW);
   }
 
   private sendEnvUniformData(model: Model) {
     let modelMat: WebGLUniformLocation;
+    let normalMat: WebGLUniformLocation;
     let viewMat: WebGLUniformLocation;
     let perspectiveMat: WebGLUniformLocation;
 
     modelMat = this.gl.getUniformLocation(this.envShaderProgram, 'modelMat');
     this.gl.uniformMatrix4fv(modelMat, false, model.modelMat());
+
+    normalMat = this.gl.getUniformLocation(this.envShaderProgram, 'normalMat');
+    this.gl.uniformMatrix4fv(normalMat, false, model.normalMat());
 
     viewMat = this.gl.getUniformLocation(this.envShaderProgram, 'viewMat');
     this.gl.uniformMatrix4fv(viewMat, false, this.camera.getLookAt());

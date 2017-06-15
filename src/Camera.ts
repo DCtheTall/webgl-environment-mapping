@@ -17,7 +17,7 @@ export default class Camera {
 
   constructor() {
     this.at = vec3.fromValues(0, 0, -10);
-    this.eye = vec3.fromValues(0, 0, 2);
+    this.eye = vec3.fromValues(0, 1, 2);
     this.up = vec3.fromValues(0, 1, 0);
 
     this.perspectiveMat = mat4.perspective(mat4.create(), this._ASPECT_RATIO, this._FOVY, this._NEAR, this._FAR);
