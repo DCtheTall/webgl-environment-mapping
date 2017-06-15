@@ -1,4 +1,3 @@
-import * as ParseWavefrontObj from 'wavefront-obj-parser';
 import axios, { AxiosResponse } from 'axios';
 import * as BluebirdPromise from 'bluebird';
 import {
@@ -10,10 +9,9 @@ import * as OBJ from 'webgl-obj-loader';
 export default class Model {
   public vertices: Float32Array;
   public normals: Float32Array;
-  public UVs: Float32Array;
-  public normalIndices: Uint16Array;
-  public vertexIndices: Uint16Array;
-  public UVIndices: Uint16Array;
+  public indices: Uint16Array;
+  public ambient: number;
+  public lambertian: number;
 
   private position: vec3;
 
@@ -24,6 +22,9 @@ export default class Model {
     this.position = vec3.fromValues(0, 0, 0);
     this.rotationMatrix = mat4.create();
     this.translationMatrix = mat4.create();
+
+    this.ambient = 0.15;
+    this.lambertian = 0.85;
   }
 
   public loadOBJFile(url: string): Promise<void> {
@@ -35,9 +36,8 @@ export default class Model {
         model = new OBJ.Mesh(res.data);
         this.vertices = new Float32Array(model.vertices);
         this.normals = new Float32Array(model.vertexNormals);
-        this.vertexIndices = new Uint16Array(model.indices);
-        this.normalIndices = new Uint16Array(model.indices);
-        // this.UVIndices = new Uint16Array(objJson.uvIndex.filter((i: number) => i >= 0));
+        this.indices = new Uint16Array(model.indices);
+        console.log(Math.max.apply(null, this.vertices));
 
         return BluebirdPromise.resolve();
       })
@@ -56,7 +56,7 @@ export default class Model {
   }
 
   public rotate(rad: number, axis: vec3): void {
-    this.rotationMatrix = mat4.fromRotation(this.rotationMatrix, rad, axis);
+    this.rotationMatrix = mat4.multiply(mat4.create(), mat4.fromRotation(mat4.create(), rad, axis), this.rotationMatrix);
   }
 
   public modelMat(): mat4 {

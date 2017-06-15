@@ -1,11 +1,10 @@
 import axios, { AxiosResponse } from 'axios';
 import * as BluebirdPromise from 'bluebird';
+import { vec3 } from 'gl-matrix';
 import Camera from './Camera';
 import Model from './Model';
 
 export default class Scene {
-  private _ASPECT_RATIO: number = 1;
-
   private gl: WebGLRenderingContext;
   private camera: Camera;
   private envShaderProgram: WebGLProgram;
@@ -109,16 +108,13 @@ export default class Scene {
     this.gl.enableVertexAttribArray(aPosition);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, model.vertices, this.gl.DYNAMIC_DRAW);
 
-    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.vertexIndicesBuffer);
-    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, model.vertexIndices, this.gl.DYNAMIC_DRAW);
-
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.normalBuffer);
     this.gl.vertexAttribPointer(aNormal, 3, this.gl.FLOAT, false, 0, 0);
     this.gl.enableVertexAttribArray(aNormal);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, model.normals, this.gl.DYNAMIC_DRAW);
 
     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.normalIndexBuffer);
-    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, model.normalIndices, this.gl.DYNAMIC_DRAW);
+    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, model.indices, this.gl.DYNAMIC_DRAW);
   }
 
   private sendEnvUniformData(model: Model) {
@@ -126,6 +122,9 @@ export default class Scene {
     let normalMat: WebGLUniformLocation;
     let viewMat: WebGLUniformLocation;
     let perspectiveMat: WebGLUniformLocation;
+
+    let uAmbient: WebGLUniformLocation;
+    let uLambertian: WebGLUniformLocation;
 
     modelMat = this.gl.getUniformLocation(this.envShaderProgram, 'modelMat');
     this.gl.uniformMatrix4fv(modelMat, false, model.modelMat());
@@ -138,6 +137,12 @@ export default class Scene {
 
     perspectiveMat = this.gl.getUniformLocation(this.envShaderProgram, 'perspectiveMat');
     this.gl.uniformMatrix4fv(perspectiveMat, false, this.camera.perspectiveMat);
+
+    uAmbient = this.gl.getUniformLocation(this.envShaderProgram, 'u_Ambient');
+    this.gl.uniform1f(uAmbient, model.ambient);
+
+    uLambertian = this.gl.getUniformLocation(this.envShaderProgram, 'u_Lambertian');
+    this.gl.uniform1f(uLambertian, model.lambertian);
   }
 
   public renderEnvironment(teapot: Model) {
@@ -146,6 +151,6 @@ export default class Scene {
     this.sendEnvAttributeData(teapot);
     this.sendEnvUniformData(teapot);
 
-    this.gl.drawElements(this.gl.TRIANGLES, teapot.vertexIndices.length, this.gl.UNSIGNED_SHORT, 0);
+    this.gl.drawElements(this.gl.TRIANGLES, teapot.indices.length, this.gl.UNSIGNED_SHORT, 0);
   }
 }
