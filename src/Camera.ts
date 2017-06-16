@@ -9,18 +9,26 @@ export default class Camera {
   private _NEAR: number = 1e-2;
   private _FAR: number = 1e6;
 
-  public eye: vec3;
-  public at: vec3;
-  public up: vec3;
+  private eye: vec3;
+  private at: vec3;
+  private up: vec3;
 
   public perspectiveMat: mat4;
 
   constructor() {
-    this.eye = vec3.fromValues(0, 50, -100);
-    this.at = vec3.fromValues(0, 0, 100);
-    this.up = vec3.fromValues(0, 1, 0);
+    this.eye = vec3.fromValues(0, 60, -100);
+    this.at = vec3.fromValues(0, -10, 100);
+    this.up = vec3.fromValues(0, 1, 0.2);
 
     this.perspectiveMat = mat4.perspective(mat4.create(), this._ASPECT_RATIO, this._FOVY, this._NEAR, this._FAR);
+  }
+
+  public getEye(): vec3 {
+    return this.eye;
+  }
+
+  public getAt(): vec3 {
+    return this.at;
   }
 
   public setEye(x: number, y: number, z: number): void {

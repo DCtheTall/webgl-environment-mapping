@@ -1,8 +1,16 @@
 import axios, { AxiosResponse } from 'axios';
 import * as BluebirdPromise from 'bluebird';
-import { vec3 } from 'gl-matrix';
+import {
+  vec3,
+  vec4,
+} from 'gl-matrix';
 import Camera from './Camera';
 import Model from './Model';
+
+interface Lights {
+  color: vec4;
+  position: vec3;
+}
 
 export default class Scene {
   private gl: WebGLRenderingContext;
@@ -14,6 +22,8 @@ export default class Scene {
 
   private normalBuffer: WebGLBuffer;
   private normalIndexBuffer: WebGLBuffer;
+
+  private lights: Lights[];
 
   constructor(canvas: HTMLCanvasElement) {
     let sideLength: number;
@@ -55,9 +65,68 @@ export default class Scene {
     return shader;
   }
 
-  /**
-   * initEnvironmentShaders create shader for environment around reflective object
-   */
+  private sendEnvAttributeData(model: Model) {
+    let aPosition: number;
+    let aNormal: number;
+
+    aPosition = this.gl.getAttribLocation(this.envShaderProgram, 'a_Position');
+    aNormal = this.gl.getAttribLocation(this.envShaderProgram, 'a_Normal');
+
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+    this.gl.vertexAttribPointer(aPosition, 3, this.gl.FLOAT, false, 0, 0);
+    this.gl.enableVertexAttribArray(aPosition);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, model.vertices, this.gl.DYNAMIC_DRAW);
+
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.normalBuffer);
+    this.gl.vertexAttribPointer(aNormal, 3, this.gl.FLOAT, false, 0, 0);
+    this.gl.enableVertexAttribArray(aNormal);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, model.normals, this.gl.DYNAMIC_DRAW);
+
+    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.normalIndexBuffer);
+    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, model.indices, this.gl.DYNAMIC_DRAW);
+  }
+
+  private sendEnvUniformData(model: Model) {
+    let modelMat: WebGLUniformLocation;
+    let normalMat: WebGLUniformLocation;
+    let viewMat: WebGLUniformLocation;
+    let perspectiveMat: WebGLUniformLocation;
+
+    let uAmbient: WebGLUniformLocation;
+    let uLambertian: WebGLUniformLocation;
+    let uSpecular: WebGLUniformLocation;
+
+    let cameraEye: WebGLUniformLocation;
+    let cameraAt: WebGLUniformLocation;
+
+    modelMat = this.gl.getUniformLocation(this.envShaderProgram, 'modelMat');
+    this.gl.uniformMatrix4fv(modelMat, false, model.modelMat());
+
+    normalMat = this.gl.getUniformLocation(this.envShaderProgram, 'normalMat');
+    this.gl.uniformMatrix4fv(normalMat, false, model.normalMat());
+
+    viewMat = this.gl.getUniformLocation(this.envShaderProgram, 'viewMat');
+    this.gl.uniformMatrix4fv(viewMat, false, this.camera.getLookAt());
+
+    perspectiveMat = this.gl.getUniformLocation(this.envShaderProgram, 'perspectiveMat');
+    this.gl.uniformMatrix4fv(perspectiveMat, false, this.camera.perspectiveMat);
+
+    uAmbient = this.gl.getUniformLocation(this.envShaderProgram, 'u_Ambient');
+    this.gl.uniform1f(uAmbient, model.ambient);
+
+    uLambertian = this.gl.getUniformLocation(this.envShaderProgram, 'u_Lambertian');
+    this.gl.uniform1f(uLambertian, model.lambertian);
+
+    uSpecular = this.gl.getUniformLocation(this.envShaderProgram, 'u_Specular');
+    this.gl.uniform1f(uSpecular, model.specular);
+
+    cameraEye = this.gl.getUniformLocation(this.envShaderProgram, 'cameraEye');
+    this.gl.uniform3fv(cameraEye, this.camera.getEye());
+
+    cameraAt = this.gl.getUniformLocation(this.envShaderProgram, 'cameraAt');
+    this.gl.uniform3fv(cameraAt, this.camera.getAt());
+  }
+
   public initEnvironmentShaders(): Promise<void> {
     let vertexShaderSource: string;
     let fragmentShaderSource: string;
@@ -94,55 +163,6 @@ export default class Scene {
         return BluebirdPromise.resolve();
       })
       .catch(console.error);
-  }
-
-  private sendEnvAttributeData(model: Model) {
-    let aPosition: number;
-    let aNormal: number;
-
-    aPosition = this.gl.getAttribLocation(this.envShaderProgram, 'a_Position');
-    aNormal = this.gl.getAttribLocation(this.envShaderProgram, 'a_Normal');
-
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
-    this.gl.vertexAttribPointer(aPosition, 3, this.gl.FLOAT, false, 0, 0);
-    this.gl.enableVertexAttribArray(aPosition);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, model.vertices, this.gl.DYNAMIC_DRAW);
-
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.normalBuffer);
-    this.gl.vertexAttribPointer(aNormal, 3, this.gl.FLOAT, false, 0, 0);
-    this.gl.enableVertexAttribArray(aNormal);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, model.normals, this.gl.DYNAMIC_DRAW);
-
-    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.normalIndexBuffer);
-    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, model.indices, this.gl.DYNAMIC_DRAW);
-  }
-
-  private sendEnvUniformData(model: Model) {
-    let modelMat: WebGLUniformLocation;
-    let normalMat: WebGLUniformLocation;
-    let viewMat: WebGLUniformLocation;
-    let perspectiveMat: WebGLUniformLocation;
-
-    let uAmbient: WebGLUniformLocation;
-    let uLambertian: WebGLUniformLocation;
-
-    modelMat = this.gl.getUniformLocation(this.envShaderProgram, 'modelMat');
-    this.gl.uniformMatrix4fv(modelMat, false, model.modelMat());
-
-    normalMat = this.gl.getUniformLocation(this.envShaderProgram, 'normalMat');
-    this.gl.uniformMatrix4fv(normalMat, false, model.normalMat());
-
-    viewMat = this.gl.getUniformLocation(this.envShaderProgram, 'viewMat');
-    this.gl.uniformMatrix4fv(viewMat, false, this.camera.getLookAt());
-
-    perspectiveMat = this.gl.getUniformLocation(this.envShaderProgram, 'perspectiveMat');
-    this.gl.uniformMatrix4fv(perspectiveMat, false, this.camera.perspectiveMat);
-
-    uAmbient = this.gl.getUniformLocation(this.envShaderProgram, 'u_Ambient');
-    this.gl.uniform1f(uAmbient, model.ambient);
-
-    uLambertian = this.gl.getUniformLocation(this.envShaderProgram, 'u_Lambertian');
-    this.gl.uniform1f(uLambertian, model.lambertian);
   }
 
   public renderEnvironment(teapot: Model) {

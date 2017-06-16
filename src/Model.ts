@@ -7,24 +7,27 @@ import {
 import * as OBJ from 'webgl-obj-loader';
 
 export default class Model {
-  public vertices: Float32Array;
-  public normals: Float32Array;
-  public indices: Uint16Array;
-  public ambient: number;
-  public lambertian: number;
-
   private position: vec3;
 
   private rotationMatrix: mat4;
   private translationMatrix: mat4;
+
+  public vertices: Float32Array;
+  public normals: Float32Array;
+  public indices: Uint16Array;
+
+  public ambient: number;
+  public lambertian: number;
+  public specular: number;
 
   constructor() {
     this.position = vec3.fromValues(0, 0, 0);
     this.rotationMatrix = mat4.create();
     this.translationMatrix = mat4.create();
 
-    this.ambient = 0.15;
-    this.lambertian = 0.85;
+    this.ambient = 0.2;
+    this.lambertian = 0.8;
+    this.specular = 300;
   }
 
   public loadOBJFile(url: string): Promise<void> {

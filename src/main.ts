@@ -12,6 +12,6 @@ scene.initEnvironmentShaders()
   .then(() => teapot.loadOBJFile('/teapot.obj'))
   .then(() => {
     teapot.rotate(-Math.PI / 2, vec3.fromValues(1, 0, 0));
-    teapot.rotate(Math.PI, vec3.fromValues(0, 1, 0));
+    teapot.rotate(1.05 * Math.PI, vec3.fromValues(0, 1, 0));
     scene.renderEnvironment(teapot);
   });
