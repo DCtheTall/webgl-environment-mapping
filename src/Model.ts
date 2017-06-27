@@ -14,11 +14,14 @@ export default class Model {
 
   public vertices: Float32Array;
   public normals: Float32Array;
+  public textureUVs: Float32Array;
   public indices: Uint16Array;
 
   public ambient: number;
   public lambertian: number;
   public specular: number;
+
+  public texture: any;
 
   constructor() {
     this.position = vec3.fromValues(0, 0, 0);
@@ -35,26 +38,41 @@ export default class Model {
       .get(url)
       .then((res: AxiosResponse) => {
         let model: OBJ.Mesh;
+        let maxTextureVal: number;
 
         model = new OBJ.Mesh(res.data);
+        maxTextureVal = Math.max.apply(null, model.textures);
+
         this.vertices = new Float32Array(model.vertices);
         this.normals = new Float32Array(model.vertexNormals);
+        this.textureUVs = new Float32Array(model.textures.map((val: number) => val / maxTextureVal));
         this.indices = new Uint16Array(model.indices);
-        console.log(Math.max.apply(null, this.vertices));
 
         return BluebirdPromise.resolve();
       })
       .catch(console.error);
   }
 
-  public translate(_dx: number | vec3, dy: number, dz: number): void {
-    if (typeof _dx === 'number') {
-      let dx: number;
+  public loadImageForTexture(url: string): Promise<void> {
+    let img: any;
 
-      dx = <number>_dx;
+    img =  new Image();
+
+    return new BluebirdPromise((resolve: () => {}, reject: (err: Error) => {}) => {
+      img.src = url;
+      img.onload = resolve();
+    })
+    .then(() => {
+      this.texture = img;
+      return BluebirdPromise.resolve();
+    });
+  }
+
+  public translate(dx: number|vec3, dy?: number, dz?: number): void {
+    if (typeof dx === 'number') {
       this.position = vec3.add(vec3.create(), vec3.fromValues(dx, dy, dz), this.position);
     } else {
-      this.position = vec3.add(vec3.create(), _dx, this.position);
+      this.position = vec3.add(vec3.create(), dx, this.position);
     }
   }
 

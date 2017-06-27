@@ -23,6 +23,9 @@ export default class Scene {
   private normalBuffer: WebGLBuffer;
   private normalIndexBuffer: WebGLBuffer;
 
+  private textureBuffer: WebGLBuffer;
+  private textureIndexBuffer: WebGLBuffer;
+
   private lights: Lights[];
 
   constructor(canvas: HTMLCanvasElement) {
@@ -46,6 +49,9 @@ export default class Scene {
 
     this.normalBuffer = this.gl.createBuffer();
     this.normalIndexBuffer = this.gl.createBuffer();
+
+    this.textureBuffer = this.gl.createBuffer();
+    this.textureIndexBuffer = this.gl.createBuffer();
   }
 
   private compileShader(shaderSource: string, shaderType: number): WebGLShader {
@@ -65,12 +71,29 @@ export default class Scene {
     return shader;
   }
 
+  public bindEnvTextures(model: Model) {
+    let texture: WebGLTexture;
+
+    texture = this.gl.createTexture();
+
+    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, model.texture);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_NEAREST);
+    this.gl.generateMipmap(this.gl.TEXTURE_2D);
+
+    this.gl.activeTexture(this.gl.TEXTURE0);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+  }
+
   private sendEnvAttributeData(model: Model) {
     let aPosition: number;
     let aNormal: number;
+    let aTexCoord: number;
 
     aPosition = this.gl.getAttribLocation(this.envShaderProgram, 'a_Position');
     aNormal = this.gl.getAttribLocation(this.envShaderProgram, 'a_Normal');
+    aTexCoord = this.gl.getAttribLocation(this.envShaderProgram, 'a_TexCoord');
 
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
     this.gl.vertexAttribPointer(aPosition, 3, this.gl.FLOAT, false, 0, 0);
@@ -84,6 +107,11 @@ export default class Scene {
 
     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.normalIndexBuffer);
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, model.indices, this.gl.DYNAMIC_DRAW);
+
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureBuffer);
+    this.gl.vertexAttribPointer(aTexCoord, 2, this.gl.FLOAT, false, 0, 0);
+    this.gl.enableVertexAttribArray(aTexCoord);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, model.textureUVs, this.gl.DYNAMIC_DRAW);
   }
 
   private sendEnvUniformData(model: Model) {
@@ -95,6 +123,8 @@ export default class Scene {
     let uAmbient: WebGLUniformLocation;
     let uLambertian: WebGLUniformLocation;
     let uSpecular: WebGLUniformLocation;
+
+    let uSampler: WebGLUniformLocation;
 
     let cameraEye: WebGLUniformLocation;
     let cameraAt: WebGLUniformLocation;
@@ -125,6 +155,9 @@ export default class Scene {
 
     cameraAt = this.gl.getUniformLocation(this.envShaderProgram, 'cameraAt');
     this.gl.uniform3fv(cameraAt, this.camera.getAt());
+
+    uSampler = this.gl.getUniformLocation(this.envShaderProgram, 'u_Sampler');
+    this.gl.uniform1i(uSampler, 0);
   }
 
   public initEnvironmentShaders(): Promise<void> {
@@ -170,6 +203,7 @@ export default class Scene {
 
     this.sendEnvAttributeData(teapot);
     this.sendEnvUniformData(teapot);
+    this.bindEnvTextures(teapot);
 
     this.gl.drawElements(this.gl.TRIANGLES, teapot.indices.length, this.gl.UNSIGNED_SHORT, 0);
   }

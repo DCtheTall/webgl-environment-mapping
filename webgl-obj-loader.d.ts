@@ -6,5 +6,6 @@ declare namespace OBJ {
     vertices: number[];
     vertexNormals: number[];
     indices: number[];
+    textures: number[];
   }
 }
