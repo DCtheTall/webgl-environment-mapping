@@ -71,6 +71,44 @@ export default class Scene {
     return shader;
   }
 
+  public initEnvironmentShaders(): Promise<void> {
+    let vertexShaderSource: string;
+    let fragmentShaderSource: string;
+
+    let vertexShader: WebGLShader;
+    let fragmentShader: WebGLShader;
+
+    return axios
+      .get('/shaders/vertex.glsl')
+      .then((res: AxiosResponse) => {
+        vertexShaderSource = res.data;
+        return axios.get('/shaders/fragment.glsl');
+      })
+      .then((res: AxiosResponse) => {
+        fragmentShaderSource = res.data;
+
+        vertexShader = this.compileShader(vertexShaderSource, this.gl.VERTEX_SHADER);
+        fragmentShader = this.compileShader(fragmentShaderSource, this.gl.FRAGMENT_SHADER);
+
+        if (vertexShader === null || fragmentShader === null) {
+          throw new Error('Shader failed to compile. See error message for details.');
+        }
+
+        this.envShaderProgram = this.gl.createProgram();
+
+        this.gl.attachShader(this.envShaderProgram, vertexShader);
+        this.gl.attachShader(this.envShaderProgram, fragmentShader);
+        this.gl.linkProgram(this.envShaderProgram);
+
+        if (!this.gl.getProgramParameter(this.envShaderProgram, this.gl.LINK_STATUS)) {
+          throw new Error('Could not initialize shader program.');
+        }
+
+        return BluebirdPromise.resolve();
+      })
+      .catch(console.error);
+  }
+
   public bindEnvTextures(model: Model) {
     let texture: WebGLTexture;
 
@@ -158,44 +196,6 @@ export default class Scene {
 
     uSampler = this.gl.getUniformLocation(this.envShaderProgram, 'u_Sampler');
     this.gl.uniform1i(uSampler, 0);
-  }
-
-  public initEnvironmentShaders(): Promise<void> {
-    let vertexShaderSource: string;
-    let fragmentShaderSource: string;
-
-    let vertexShader: WebGLShader;
-    let fragmentShader: WebGLShader;
-
-    return axios
-      .get('/vertex.glsl')
-      .then((res: AxiosResponse) => {
-        vertexShaderSource = res.data;
-        return axios.get('/fragment.glsl');
-      })
-      .then((res: AxiosResponse) => {
-        fragmentShaderSource = res.data;
-
-        vertexShader = this.compileShader(vertexShaderSource, this.gl.VERTEX_SHADER);
-        fragmentShader = this.compileShader(fragmentShaderSource, this.gl.FRAGMENT_SHADER);
-
-        if (vertexShader === null || fragmentShader === null) {
-          throw new Error('Shader failed to compile. See error message for details.');
-        }
-
-        this.envShaderProgram = this.gl.createProgram();
-
-        this.gl.attachShader(this.envShaderProgram, vertexShader);
-        this.gl.attachShader(this.envShaderProgram, fragmentShader);
-        this.gl.linkProgram(this.envShaderProgram);
-
-        if (!this.gl.getProgramParameter(this.envShaderProgram, this.gl.LINK_STATUS)) {
-          throw new Error('Could not initialize shader program.');
-        }
-
-        return BluebirdPromise.resolve();
-      })
-      .catch(console.error);
   }
 
   public renderEnvironment(teapot: Model) {
