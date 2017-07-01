@@ -7,17 +7,11 @@ import {
 import Camera from './Camera';
 import Model from './Model';
 
-interface Lights {
-  color: vec4;
-  position: vec3;
-}
-
 export default class Scene {
   private gl: WebGLRenderingContext;
   private camera: Camera;
 
-  private envShaderProgram: WebGLProgram;
-  private reflShaderProgram: WebGLProgram;
+  private shaderProgram: WebGLProgram;
 
   private vertexBuffer: WebGLBuffer;
   private vertexIndicesBuffer: WebGLBuffer;
@@ -27,8 +21,6 @@ export default class Scene {
 
   private textureBuffer: WebGLBuffer;
   private textureIndexBuffer: WebGLBuffer;
-
-  private lights: Lights[];
 
   constructor(canvas: HTMLCanvasElement) {
     let sideLength: number;
@@ -73,7 +65,7 @@ export default class Scene {
     return shader;
   }
 
-  private initShaderProgram(vertexShaderUrl: string, fragmentShaderUrl: string): Promise<WebGLProgram> {
+  public initShaderProgram(): Promise<void> {
     let vertexShaderSource: string;
     let fragmentShaderSource: string;
 
@@ -83,10 +75,10 @@ export default class Scene {
     let shaderProgram: WebGLProgram;
 
     return axios
-      .get(vertexShaderUrl)
+      .get('/shaders/vertex.glsl')
       .then((res: AxiosResponse) => {
         vertexShaderSource = res.data;
-        return axios.get(fragmentShaderUrl);
+        return axios.get('/shaders/fragment.glsl');
       })
       .then((res: AxiosResponse) => {
         fragmentShaderSource = res.data;
@@ -108,21 +100,7 @@ export default class Scene {
           throw new Error('Could not initialize shader program.');
         }
 
-        return BluebirdPromise.resolve(shaderProgram);
-      });
-  }
-
-  public initEnvironmentShaders(): Promise<void> {
-    return this.initShaderProgram('/shaders/env-vertex.glsl', '/shaders/env-fragment.glsl')
-      .then((shaderProgram: WebGLProgram) => {
-        this.envShaderProgram = shaderProgram;
-      });
-  }
-
-  public initReflectionShaders(): Promise<void> {
-    return this.initShaderProgram('/shaders/refl-vertex.glsl', '/shaders/refl-fragment.glsl')
-      .then((shaderProgram: WebGLProgram) => {
-        this.reflShaderProgram = shaderProgram;
+        this.shaderProgram = shaderProgram;
       });
   }
 
@@ -141,24 +119,24 @@ export default class Scene {
     this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
   }
 
-  private sendEnvAttributeData(model: Model) {
+  private sendVec3Attribute(buffer: WebGLBuffer, attrLocation: number, values: Float32Array): void {
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+    this.gl.vertexAttribPointer(attrLocation, 3, this.gl.FLOAT, false, 0, 0);
+    this.gl.enableVertexAttribArray(attrLocation);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, values, this.gl.DYNAMIC_DRAW);
+  }
+
+  private sendAttributeData(model: Model) {
     let aPosition: number;
     let aNormal: number;
     let aTexCoord: number;
 
-    aPosition = this.gl.getAttribLocation(this.envShaderProgram, 'a_Position');
-    aNormal = this.gl.getAttribLocation(this.envShaderProgram, 'a_Normal');
-    aTexCoord = this.gl.getAttribLocation(this.envShaderProgram, 'a_TexCoord');
+    aPosition = this.gl.getAttribLocation(this.shaderProgram, 'a_Position');
+    aNormal = this.gl.getAttribLocation(this.shaderProgram, 'a_Normal');
+    aTexCoord = this.gl.getAttribLocation(this.shaderProgram, 'a_TexCoord');
 
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
-    this.gl.vertexAttribPointer(aPosition, 3, this.gl.FLOAT, false, 0, 0);
-    this.gl.enableVertexAttribArray(aPosition);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, model.vertices, this.gl.DYNAMIC_DRAW);
-
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.normalBuffer);
-    this.gl.vertexAttribPointer(aNormal, 3, this.gl.FLOAT, false, 0, 0);
-    this.gl.enableVertexAttribArray(aNormal);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, model.normals, this.gl.DYNAMIC_DRAW);
+    this.sendVec3Attribute(this.vertexBuffer, aPosition, model.vertices);
+    this.sendVec3Attribute(this.normalBuffer, aNormal, model.normals);
 
     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.normalIndexBuffer);
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, model.indices, this.gl.DYNAMIC_DRAW);
@@ -169,58 +147,67 @@ export default class Scene {
     this.gl.bufferData(this.gl.ARRAY_BUFFER, model.textureUVs, this.gl.DYNAMIC_DRAW);
   }
 
-  private sendEnvUniformData(model: Model) {
+  private sendUniformData(model: Model) {
     let modelMat: WebGLUniformLocation;
     let normalMat: WebGLUniformLocation;
     let viewMat: WebGLUniformLocation;
     let perspectiveMat: WebGLUniformLocation;
 
-    let uAmbient: WebGLUniformLocation;
-    let uLambertian: WebGLUniformLocation;
-    let uSpecular: WebGLUniformLocation;
+    let uUseLighting: WebGLUniformLocation;
+    let uUseTexture: WebGLUniformLocation;
+
+    let uAmbientMaterialColor: WebGLUniformLocation;
+    let uLambertianMaterialColor: WebGLUniformLocation;
+    let uSpecularMaterialColor: WebGLUniformLocation;
 
     let uSampler: WebGLUniformLocation;
 
     let cameraEye: WebGLUniformLocation;
     let cameraAt: WebGLUniformLocation;
 
-    modelMat = this.gl.getUniformLocation(this.envShaderProgram, 'modelMat');
+    modelMat = this.gl.getUniformLocation(this.shaderProgram, 'modelMat');
     this.gl.uniformMatrix4fv(modelMat, false, model.modelMat());
 
-    normalMat = this.gl.getUniformLocation(this.envShaderProgram, 'normalMat');
+    normalMat = this.gl.getUniformLocation(this.shaderProgram, 'normalMat');
     this.gl.uniformMatrix4fv(normalMat, false, model.normalMat());
 
-    viewMat = this.gl.getUniformLocation(this.envShaderProgram, 'viewMat');
+    viewMat = this.gl.getUniformLocation(this.shaderProgram, 'viewMat');
     this.gl.uniformMatrix4fv(viewMat, false, this.camera.getLookAt());
 
-    perspectiveMat = this.gl.getUniformLocation(this.envShaderProgram, 'perspectiveMat');
+    perspectiveMat = this.gl.getUniformLocation(this.shaderProgram, 'perspectiveMat');
     this.gl.uniformMatrix4fv(perspectiveMat, false, this.camera.perspectiveMat);
 
-    uAmbient = this.gl.getUniformLocation(this.envShaderProgram, 'u_Ambient');
-    this.gl.uniform1f(uAmbient, model.ambient);
+    uUseLighting = this.gl.getUniformLocation(this.shaderProgram, 'u_UseLighting');
+    this.gl.uniform1i(uUseLighting, Number(model.useLighting));
 
-    uLambertian = this.gl.getUniformLocation(this.envShaderProgram, 'u_Lambertian');
-    this.gl.uniform1f(uLambertian, model.lambertian);
+    uUseTexture = this.gl.getUniformLocation(this.shaderProgram, 'u_UseTexture');
+    this.gl.uniform1i(uUseTexture, Number(model.useTexture));
 
-    uSpecular = this.gl.getUniformLocation(this.envShaderProgram, 'u_Specular');
-    this.gl.uniform1f(uSpecular, model.specular);
+    uAmbientMaterialColor = this.gl.getUniformLocation(this.shaderProgram, 'u_AmbientMaterialColor');
+    this.gl.uniform3fv(uAmbientMaterialColor, model.ambientMaterialColor);
 
-    cameraEye = this.gl.getUniformLocation(this.envShaderProgram, 'cameraEye');
+    uLambertianMaterialColor = this.gl.getUniformLocation(this.shaderProgram, 'u_LambertianMaterialColor');
+    this.gl.uniform3fv(uLambertianMaterialColor, model.lambertianMaterialColor);
+
+    uSpecularMaterialColor = this.gl.getUniformLocation(this.shaderProgram, 'u_SpecularMaterialColor');
+    this.gl.uniform3fv(uSpecularMaterialColor, model.specularMaterialColor);
+
+    cameraEye = this.gl.getUniformLocation(this.shaderProgram, 'cameraEye');
     this.gl.uniform3fv(cameraEye, this.camera.getEye());
 
-    cameraAt = this.gl.getUniformLocation(this.envShaderProgram, 'cameraAt');
+    cameraAt = this.gl.getUniformLocation(this.shaderProgram, 'cameraAt');
     this.gl.uniform3fv(cameraAt, this.camera.getAt());
 
-    uSampler = this.gl.getUniformLocation(this.envShaderProgram, 'u_Sampler');
+    uSampler = this.gl.getUniformLocation(this.shaderProgram, 'u_Sampler');
     this.gl.uniform1i(uSampler, 0);
   }
 
   public renderEnvironment(teapot: Model) {
-    this.gl.useProgram(this.envShaderProgram);
+    this.gl.useProgram(this.shaderProgram);
 
-    this.sendEnvAttributeData(teapot);
-    this.sendEnvUniformData(teapot);
-    this.bindModelTexture(teapot);
+    this.sendAttributeData(teapot);
+    this.sendUniformData(teapot);
+    if (teapot.useTexture) this.bindModelTexture(teapot);
 
     this.gl.drawElements(this.gl.TRIANGLES, teapot.indices.length, this.gl.UNSIGNED_SHORT, 0);
   }

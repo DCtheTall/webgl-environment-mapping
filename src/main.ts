@@ -6,10 +6,11 @@ const canvas = <HTMLCanvasElement>document.getElementById('webgl-canvas');
 
 const scene = new Scene(canvas);
 
-const teapot = new Model();
+const teapot = new Model({
+  ambientMaterialColor: vec3.fromValues(0.3, 0.3, 0.3),
+});
 
-scene.initEnvironmentShaders()
-  .then(() => scene.initReflectionShaders())
+scene.initShaderProgram()
   .then(() => teapot.loadOBJFile('/teapot.obj'))
   .then(() => teapot.loadImageForTexture('/red.png'))
   .then(() => {

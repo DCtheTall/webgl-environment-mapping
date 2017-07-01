@@ -6,31 +6,44 @@ import {
 } from 'gl-matrix';
 import * as OBJ from 'webgl-obj-loader';
 
+interface ModelOptions {
+  useLighting?: boolean;
+  ambientMaterialColor?: vec3;
+  lambertianMaterialColor?: vec3;
+  specularMaterialColor?: vec3;
+}
+
 export default class Model {
   private position: vec3;
 
   private rotationMatrix: mat4;
   private translationMatrix: mat4;
 
+  public useTexture: boolean;
+  public useLighting: boolean;
+
   public vertices: Float32Array;
   public normals: Float32Array;
   public textureUVs: Float32Array;
   public indices: Uint16Array;
 
-  public ambient: number;
-  public lambertian: number;
-  public specular: number;
+  public ambientMaterialColor: vec3;
+  public lambertianMaterialColor: vec3;
+  public specularMaterialColor: vec3;
 
   public texture: any;
 
-  constructor() {
+  constructor(opts?: ModelOptions) {
+    this.useTexture = false;
+    this.useLighting = opts && opts.useLighting ? opts.useLighting : true;
+
     this.position = vec3.fromValues(0, 0, 0);
     this.rotationMatrix = mat4.create();
     this.translationMatrix = mat4.create();
 
-    this.ambient = 0.2;
-    this.lambertian = 0.8;
-    this.specular = 300;
+    this.ambientMaterialColor = opts && opts.ambientMaterialColor ? opts.ambientMaterialColor : vec3.fromValues(1, 1, 1);
+    this.lambertianMaterialColor = opts && opts.lambertianMaterialColor ? opts.lambertianMaterialColor : vec3.fromValues(1, 1, 1);
+    this.specularMaterialColor = opts && opts.specularMaterialColor ? opts.specularMaterialColor : vec3.fromValues(1, 1, 1);
   }
 
   public loadOBJFile(url: string): Promise<void> {
@@ -56,6 +69,7 @@ export default class Model {
   public loadImageForTexture(url: string): Promise<void> {
     let img: any;
 
+    this.useTexture = true;
     img =  new Image();
 
     return new BluebirdPromise((resolve: () => {}, reject: (err: Error) => {}) => {
