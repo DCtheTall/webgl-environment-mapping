@@ -15,7 +15,9 @@ interface Lights {
 export default class Scene {
   private gl: WebGLRenderingContext;
   private camera: Camera;
+
   private envShaderProgram: WebGLProgram;
+  private reflShaderProgram: WebGLProgram;
 
   private vertexBuffer: WebGLBuffer;
   private vertexIndicesBuffer: WebGLBuffer;
@@ -71,18 +73,20 @@ export default class Scene {
     return shader;
   }
 
-  public initEnvironmentShaders(): Promise<void> {
+  private initShaderProgram(vertexShaderUrl: string, fragmentShaderUrl: string): Promise<WebGLProgram> {
     let vertexShaderSource: string;
     let fragmentShaderSource: string;
 
     let vertexShader: WebGLShader;
     let fragmentShader: WebGLShader;
 
+    let shaderProgram: WebGLProgram;
+
     return axios
-      .get('/shaders/vertex.glsl')
+      .get(vertexShaderUrl)
       .then((res: AxiosResponse) => {
         vertexShaderSource = res.data;
-        return axios.get('/shaders/fragment.glsl');
+        return axios.get(fragmentShaderUrl);
       })
       .then((res: AxiosResponse) => {
         fragmentShaderSource = res.data;
@@ -94,22 +98,35 @@ export default class Scene {
           throw new Error('Shader failed to compile. See error message for details.');
         }
 
-        this.envShaderProgram = this.gl.createProgram();
+        shaderProgram = this.gl.createProgram();
 
-        this.gl.attachShader(this.envShaderProgram, vertexShader);
-        this.gl.attachShader(this.envShaderProgram, fragmentShader);
-        this.gl.linkProgram(this.envShaderProgram);
+        this.gl.attachShader(shaderProgram, vertexShader);
+        this.gl.attachShader(shaderProgram, fragmentShader);
+        this.gl.linkProgram(shaderProgram);
 
-        if (!this.gl.getProgramParameter(this.envShaderProgram, this.gl.LINK_STATUS)) {
+        if (!this.gl.getProgramParameter(shaderProgram, this.gl.LINK_STATUS)) {
           throw new Error('Could not initialize shader program.');
         }
 
-        return BluebirdPromise.resolve();
-      })
-      .catch(console.error);
+        return BluebirdPromise.resolve(shaderProgram);
+      });
   }
 
-  public bindEnvTextures(model: Model) {
+  public initEnvironmentShaders(): Promise<void> {
+    return this.initShaderProgram('/shaders/env-vertex.glsl', '/shaders/env-fragment.glsl')
+      .then((shaderProgram: WebGLProgram) => {
+        this.envShaderProgram = shaderProgram;
+      });
+  }
+
+  public initReflectionShaders(): Promise<void> {
+    return this.initShaderProgram('/shaders/refl-vertex.glsl', '/shaders/refl-fragment.glsl')
+      .then((shaderProgram: WebGLProgram) => {
+        this.reflShaderProgram = shaderProgram;
+      });
+  }
+
+  public bindModelTexture(model: Model) {
     let texture: WebGLTexture;
 
     texture = this.gl.createTexture();
@@ -203,7 +220,7 @@ export default class Scene {
 
     this.sendEnvAttributeData(teapot);
     this.sendEnvUniformData(teapot);
-    this.bindEnvTextures(teapot);
+    this.bindModelTexture(teapot);
 
     this.gl.drawElements(this.gl.TRIANGLES, teapot.indices.length, this.gl.UNSIGNED_SHORT, 0);
   }

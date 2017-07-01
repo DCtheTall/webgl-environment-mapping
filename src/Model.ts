@@ -60,7 +60,7 @@ export default class Model {
 
     return new BluebirdPromise((resolve: () => {}, reject: (err: Error) => {}) => {
       img.src = url;
-      img.onload = resolve();
+      img.onload = resolve;
     })
     .then(() => {
       this.texture = img;
