@@ -29,7 +29,7 @@ void main() {
   float blinnPhong;
 
   ambientLightColor = vec3(0.7, 0.75, 1.0);
-  lightPosition = vec3(20, 100, -10);
+  lightPosition = vec3(-50, 100, 30);
   lambertianLightColor = vec3(0.7, 0.75, 1.0);
   specularLightColor = vec3(1.0, 1.0, 1.0);
 
@@ -42,6 +42,8 @@ void main() {
     lambertian = clamp(dot(normalize(v_Normal), lightDir), 0.0, 1.0);
 
     color += lambertian * u_LambertianMaterialColor * lambertianLightColor;
+  } else if (u_UseTexture) {
+    color = vec3(1.0, 1.0, 1.0);
   }
 
   if (u_UseTexture) {

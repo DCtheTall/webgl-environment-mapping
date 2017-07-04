@@ -3,15 +3,17 @@ import * as BluebirdPromise from 'bluebird';
 import {
   vec3,
   vec4,
+  mat4,
 } from 'gl-matrix';
 import Camera from './Camera';
 import Model from './Model';
+import Cube from './Cube';
 
 export default class Scene {
   private gl: WebGLRenderingContext;
   private camera: Camera;
 
-  private shaderProgram: WebGLProgram;
+  private skyBoxShaderProgram: WebGLProgram;
 
   private vertexBuffer: WebGLBuffer;
   private vertexIndicesBuffer: WebGLBuffer;
@@ -65,7 +67,7 @@ export default class Scene {
     return shader;
   }
 
-  public initShaderProgram(): Promise<void> {
+  private initShaderProgram(vertexUrl: string, fragmentUrl: string): Promise<WebGLProgram> {
     let vertexShaderSource: string;
     let fragmentShaderSource: string;
 
@@ -75,10 +77,10 @@ export default class Scene {
     let shaderProgram: WebGLProgram;
 
     return axios
-      .get('/shaders/vertex.glsl')
+      .get(vertexUrl)
       .then((res: AxiosResponse) => {
         vertexShaderSource = res.data;
-        return axios.get('/shaders/fragment.glsl');
+        return axios.get(fragmentUrl);
       })
       .then((res: AxiosResponse) => {
         fragmentShaderSource = res.data;
@@ -100,59 +102,113 @@ export default class Scene {
           throw new Error('Could not initialize shader program.');
         }
 
-        this.shaderProgram = shaderProgram;
+        return shaderProgram;
       });
   }
 
-  public bindModelTexture(model: Model) {
+  public initSkyboxShaderProgram(): Promise<void> {
+    return this.initShaderProgram('/shaders/cube-map-vertex.glsl', '/shaders/skybox-fragment.glsl')
+      .then((shaderProgram: WebGLProgram) => {
+        this.skyBoxShaderProgram = shaderProgram
+      });
+  }
+
+  public bindModelTexture(model: Model): void {
     let texture: WebGLTexture;
 
     texture = this.gl.createTexture();
 
     this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
     this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, model.texture);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_NEAREST);
     this.gl.generateMipmap(this.gl.TEXTURE_2D);
 
     this.gl.activeTexture(this.gl.TEXTURE0);
-    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
   }
 
-  private sendVec3Attribute(buffer: WebGLBuffer, attrLocation: number, values: Float32Array): void {
+  public bindCubeTexture(cube: Cube): void {
+    let texture: WebGLTexture;
+
+    texture = this.gl.createTexture();
+
+    this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, texture);
+    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
+    this.gl.texImage2D(this.gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, cube.cubeTexture.left);
+    this.gl.texImage2D(this.gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, cube.cubeTexture.right);
+    this.gl.texImage2D(this.gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, cube.cubeTexture.bottom);
+    this.gl.texImage2D(this.gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, cube.cubeTexture.top);
+    this.gl.texImage2D(this.gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, cube.cubeTexture.back);
+    this.gl.texImage2D(this.gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, cube.cubeTexture.front);
+    this.gl.generateMipmap(this.gl.TEXTURE_CUBE_MAP);
+
+    this.gl.activeTexture(this.gl.TEXTURE0);
+  }
+
+  private sendVecAttribute(dimension: number, buffer: WebGLBuffer, attrLocation: number, values: Float32Array): void {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-    this.gl.vertexAttribPointer(attrLocation, 3, this.gl.FLOAT, false, 0, 0);
+    this.gl.vertexAttribPointer(attrLocation, dimension, this.gl.FLOAT, false, 0, 0);
     this.gl.enableVertexAttribArray(attrLocation);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, values, this.gl.DYNAMIC_DRAW);
   }
 
-  private sendAttributeData(model: Model) {
+  private sendAttributeData(model: Model, shaderProgram: WebGLProgram): void {
     let aPosition: number;
     let aNormal: number;
     let aTexCoord: number;
+    let aTexDirection: number;
 
-    aPosition = this.gl.getAttribLocation(this.shaderProgram, 'a_Position');
-    aNormal = this.gl.getAttribLocation(this.shaderProgram, 'a_Normal');
-    aTexCoord = this.gl.getAttribLocation(this.shaderProgram, 'a_TexCoord');
+    aPosition = this.gl.getAttribLocation(shaderProgram, 'a_Position');
+    aNormal = this.gl.getAttribLocation(shaderProgram, 'a_Normal');
+    if (model.textureUVs) aTexCoord = this.gl.getAttribLocation(shaderProgram, 'a_TexCoord');
+    if (model.texDirections) aTexDirection = this.gl.getAttribLocation(shaderProgram, 'a_TexDirection');
 
-    this.sendVec3Attribute(this.vertexBuffer, aPosition, model.vertices);
-    this.sendVec3Attribute(this.normalBuffer, aNormal, model.normals);
+    this.sendVecAttribute(3, this.vertexBuffer, aPosition, model.vertices);
+    this.sendVecAttribute(3, this.normalBuffer, aNormal, model.normals);
+
+    if (model.textureUVs) {
+      this.sendVecAttribute(2, this.textureBuffer, aTexCoord, model.textureUVs);
+    }
 
     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.normalIndexBuffer);
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, model.indices, this.gl.DYNAMIC_DRAW);
-
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureBuffer);
-    this.gl.vertexAttribPointer(aTexCoord, 2, this.gl.FLOAT, false, 0, 0);
-    this.gl.enableVertexAttribArray(aTexCoord);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, model.textureUVs, this.gl.DYNAMIC_DRAW);
   }
 
-  private sendUniformData(model: Model) {
-    let modelMat: WebGLUniformLocation;
-    let normalMat: WebGLUniformLocation;
-    let viewMat: WebGLUniformLocation;
-    let perspectiveMat: WebGLUniformLocation;
+  private sendMatrixUniforms(model: Model, shaderProgram: WebGLProgram): void {
+    interface uniform {
+      name: string;
+      matrix: mat4;
+    }
 
+    let uniforms: uniform[];
+
+    uniforms = [
+      { name: 'u_ModelMat', matrix: model.modelMat() },
+      { name: 'u_NormalMat', matrix: model.normalMat() },
+      { name: 'u_PerspectiveMat', matrix: this.camera.perspectiveMat },
+      { name: 'u_ViewMat', matrix: this.camera.getLookAt() },
+    ];
+
+    uniforms.forEach((u: uniform) => {
+      let uniformLocation: WebGLUniformLocation;
+      uniformLocation = this.gl.getUniformLocation(shaderProgram, u.name);
+      this.gl.uniformMatrix4fv(uniformLocation, false, u.matrix);
+    });
+  }
+
+  private sendSkyboxUniforms(skyBox: Cube): void {
+    let uSampler: WebGLUniformLocation;
+
+    this.sendMatrixUniforms(skyBox, this.skyBoxShaderProgram);
+    uSampler = this.gl.getUniformLocation(this.skyBoxShaderProgram, 'u_Sampler');
+    this.gl.uniform1i(uSampler, 0);
+  }
+
+  private sendUniformData(model: Model, shaderProgram: WebGLProgram): void {
     let uUseLighting: WebGLUniformLocation;
     let uUseTexture: WebGLUniformLocation;
 
@@ -165,50 +221,39 @@ export default class Scene {
     let cameraEye: WebGLUniformLocation;
     let cameraAt: WebGLUniformLocation;
 
-    modelMat = this.gl.getUniformLocation(this.shaderProgram, 'modelMat');
-    this.gl.uniformMatrix4fv(modelMat, false, model.modelMat());
+    this.sendMatrixUniforms(model, shaderProgram);
 
-    normalMat = this.gl.getUniformLocation(this.shaderProgram, 'normalMat');
-    this.gl.uniformMatrix4fv(normalMat, false, model.normalMat());
-
-    viewMat = this.gl.getUniformLocation(this.shaderProgram, 'viewMat');
-    this.gl.uniformMatrix4fv(viewMat, false, this.camera.getLookAt());
-
-    perspectiveMat = this.gl.getUniformLocation(this.shaderProgram, 'perspectiveMat');
-    this.gl.uniformMatrix4fv(perspectiveMat, false, this.camera.perspectiveMat);
-
-    uUseLighting = this.gl.getUniformLocation(this.shaderProgram, 'u_UseLighting');
+    uUseLighting = this.gl.getUniformLocation(shaderProgram, 'u_UseLighting');
     this.gl.uniform1i(uUseLighting, Number(model.useLighting));
 
-    uUseTexture = this.gl.getUniformLocation(this.shaderProgram, 'u_UseTexture');
+    uUseTexture = this.gl.getUniformLocation(shaderProgram, 'u_UseTexture');
     this.gl.uniform1i(uUseTexture, Number(model.useTexture));
 
-    uAmbientMaterialColor = this.gl.getUniformLocation(this.shaderProgram, 'u_AmbientMaterialColor');
+    uAmbientMaterialColor = this.gl.getUniformLocation(shaderProgram, 'u_AmbientMaterialColor');
     this.gl.uniform3fv(uAmbientMaterialColor, model.ambientMaterialColor);
 
-    uLambertianMaterialColor = this.gl.getUniformLocation(this.shaderProgram, 'u_LambertianMaterialColor');
+    uLambertianMaterialColor = this.gl.getUniformLocation(shaderProgram, 'u_LambertianMaterialColor');
     this.gl.uniform3fv(uLambertianMaterialColor, model.lambertianMaterialColor);
 
-    uSpecularMaterialColor = this.gl.getUniformLocation(this.shaderProgram, 'u_SpecularMaterialColor');
+    uSpecularMaterialColor = this.gl.getUniformLocation(shaderProgram, 'u_SpecularMaterialColor');
     this.gl.uniform3fv(uSpecularMaterialColor, model.specularMaterialColor);
 
-    cameraEye = this.gl.getUniformLocation(this.shaderProgram, 'cameraEye');
+    cameraEye = this.gl.getUniformLocation(shaderProgram, 'cameraEye');
     this.gl.uniform3fv(cameraEye, this.camera.getEye());
 
-    cameraAt = this.gl.getUniformLocation(this.shaderProgram, 'cameraAt');
+    cameraAt = this.gl.getUniformLocation(shaderProgram, 'cameraAt');
     this.gl.uniform3fv(cameraAt, this.camera.getAt());
 
-    uSampler = this.gl.getUniformLocation(this.shaderProgram, 'u_Sampler');
+    uSampler = this.gl.getUniformLocation(shaderProgram, 'u_Sampler');
     this.gl.uniform1i(uSampler, 0);
   }
 
-  public renderEnvironment(teapot: Model) {
-    this.gl.useProgram(this.shaderProgram);
+  public renderSkyBox(skyBox: Cube): void {
+    this.gl.useProgram(this.skyBoxShaderProgram);
+    this.sendAttributeData(skyBox, this.skyBoxShaderProgram);
+    this.sendSkyboxUniforms(skyBox);
+    if (skyBox.useTexture) this.bindCubeTexture(skyBox);
 
-    this.sendAttributeData(teapot);
-    this.sendUniformData(teapot);
-    if (teapot.useTexture) this.bindModelTexture(teapot);
-
-    this.gl.drawElements(this.gl.TRIANGLES, teapot.indices.length, this.gl.UNSIGNED_SHORT, 0);
+    this.gl.drawElements(this.gl.TRIANGLES, skyBox.indices.length, this.gl.UNSIGNED_SHORT, 0);
   }
 }

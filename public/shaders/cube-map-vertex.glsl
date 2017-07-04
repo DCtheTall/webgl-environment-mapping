@@ -2,7 +2,6 @@ precision mediump float;
 
 attribute vec3 a_Position;
 attribute vec3 a_Normal;
-attribute vec2 a_TexCoord;
 
 uniform mat4 u_ModelMat;
 uniform mat4 u_NormalMat;
@@ -11,7 +10,7 @@ uniform mat4 u_ViewMat;
 
 varying vec3 v_Position;
 varying vec3 v_Normal;
-varying vec2 v_TexCoord;
+varying vec3 v_TexDirection;
 
 void main() {
   vec4 transformedPosition;
@@ -23,7 +22,7 @@ void main() {
   transformedNormal = u_NormalMat * vec4(a_Normal, 1.0);
   v_Normal = vec3(transformedNormal.xyz);
 
-  v_TexCoord = a_TexCoord;
+  v_TexDirection = a_Position;
 
   gl_Position = u_PerspectiveMat * u_ViewMat * transformedPosition;
 }

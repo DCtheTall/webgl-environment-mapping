@@ -6,7 +6,7 @@ import {
 } from 'gl-matrix';
 import * as OBJ from 'webgl-obj-loader';
 
-interface ModelOptions {
+export interface ModelOptions {
   useLighting?: boolean;
   ambientMaterialColor?: vec3;
   lambertianMaterialColor?: vec3;
@@ -16,6 +16,7 @@ interface ModelOptions {
 export default class Model {
   private position: vec3;
 
+  private scaleMatrix: mat4;
   private rotationMatrix: mat4;
   private translationMatrix: mat4;
 
@@ -25,6 +26,7 @@ export default class Model {
   public vertices: Float32Array;
   public normals: Float32Array;
   public textureUVs: Float32Array;
+  public texDirections: Float32Array;
   public indices: Uint16Array;
 
   public ambientMaterialColor: vec3;
@@ -35,9 +37,10 @@ export default class Model {
 
   constructor(opts?: ModelOptions) {
     this.useTexture = false;
-    this.useLighting = opts && opts.useLighting ? opts.useLighting : true;
+    this.useLighting = opts !== undefined && opts.useLighting ? opts.useLighting : true;
 
     this.position = vec3.fromValues(0, 0, 0);
+    this.scaleMatrix = mat4.create();
     this.rotationMatrix = mat4.create();
     this.translationMatrix = mat4.create();
 
@@ -54,7 +57,7 @@ export default class Model {
         let maxTextureVal: number;
 
         model = new OBJ.Mesh(res.data);
-        maxTextureVal = Math.max.apply(null, model.textures);
+        maxTextureVal = Math.max.apply(null, [...model.textures, 1]);
 
         this.vertices = new Float32Array(model.vertices);
         this.normals = new Float32Array(model.vertexNormals);
@@ -82,6 +85,16 @@ export default class Model {
     });
   }
 
+  public scale(s: number) {
+    this.scaleMatrix = mat4.set(
+      mat4.create(),
+      s, 0, 0, 0,
+      0, s, 0, 0,
+      0, 0, s, 0,
+      0, 0, 0, 1
+    );
+  }
+
   public translate(dx: number|vec3, dy?: number, dz?: number): void {
     if (typeof dx === 'number') {
       this.position = vec3.add(vec3.create(), vec3.fromValues(dx, dy, dz), this.position);
@@ -95,7 +108,8 @@ export default class Model {
   }
 
   public modelMat(): mat4 {
-    return mat4.multiply(mat4.create(), this.translationMatrix, this.rotationMatrix);
+    let rotateScaleMatrix: mat4 = mat4.multiply(mat4.create(), this.rotationMatrix, this.scaleMatrix);
+    return mat4.multiply(mat4.create(), this.translationMatrix, rotateScaleMatrix);
   }
 
   public normalMat(): mat4 {
