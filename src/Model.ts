@@ -13,6 +13,16 @@ export interface ModelOptions {
   specularMaterialColor?: vec3;
 }
 
+export interface CubeTexture<T> {
+  [index: string]: T;
+  front: T;
+  back: T;
+  left: T;
+  right: T;
+  top: T;
+  bottom: T;
+}
+
 export default class Model {
   private position: vec3;
 
@@ -32,8 +42,8 @@ export default class Model {
   public ambientMaterialColor: vec3;
   public lambertianMaterialColor: vec3;
   public specularMaterialColor: vec3;
-
-  public texture: any;
+  
+  public cubeTexture: CubeTexture<any>;
 
   constructor(opts?: ModelOptions) {
     this.useTexture = false;
@@ -69,20 +79,16 @@ export default class Model {
       .catch(console.error);
   }
 
-  public loadImageForTexture(url: string): Promise<void> {
-    let img: any;
-
+  public loadCubeTexture(cubeTextureUrls: CubeTexture<string>): Promise<void> {
     this.useTexture = true;
-    img =  new Image();
 
-    return new BluebirdPromise((resolve: () => {}, reject: (err: Error) => {}) => {
-      img.src = url;
-      img.onload = resolve;
-    })
-    .then(() => {
-      this.texture = img;
-      return BluebirdPromise.resolve();
-    });
+    return BluebirdPromise.all(
+      Object.keys(this.cubeTexture).map((key: string) => new BluebirdPromise((resolve: () => {}) => {
+        this.cubeTexture[key] = new Image();
+        this.cubeTexture[key].src = cubeTextureUrls[key];
+        this.cubeTexture[key].onload = resolve;
+      }))
+    );
   }
 
   public scale(s: number) {

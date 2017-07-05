@@ -11,7 +11,7 @@ uniform mat4 u_ViewMat;
 
 varying vec3 v_Position;
 varying vec3 v_Normal;
-varying vec2 v_TexCoord;
+varying vec3 v_TexDirection;
 
 void main() {
   vec4 transformedPosition;
@@ -20,10 +20,10 @@ void main() {
   transformedPosition = u_ModelMat * vec4(a_Position, 1.0);
   v_Position = vec3(transformedPosition.xyz);
 
+  v_TexDirection = a_Position;
+
   transformedNormal = u_NormalMat * vec4(a_Normal, 1.0);
   v_Normal = vec3(transformedNormal.xyz);
-
-  v_TexCoord = a_TexCoord;
 
   gl_Position = u_PerspectiveMat * u_ViewMat * transformedPosition;
 }

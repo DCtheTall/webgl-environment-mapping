@@ -13,7 +13,7 @@ export default class Scene {
   private gl: WebGLRenderingContext;
   private camera: Camera;
 
-  private skyBoxShaderProgram: WebGLProgram;
+  private shaderProgram: WebGLProgram;
 
   private vertexBuffer: WebGLBuffer;
   private vertexIndicesBuffer: WebGLBuffer;
@@ -67,7 +67,7 @@ export default class Scene {
     return shader;
   }
 
-  private initShaderProgram(vertexUrl: string, fragmentUrl: string): Promise<WebGLProgram> {
+  public initShaderProgram(): Promise<void> {
     let vertexShaderSource: string;
     let fragmentShaderSource: string;
 
@@ -77,10 +77,10 @@ export default class Scene {
     let shaderProgram: WebGLProgram;
 
     return axios
-      .get(vertexUrl)
+      .get('/shaders/vertex.glsl')
       .then((res: AxiosResponse) => {
         vertexShaderSource = res.data;
-        return axios.get(fragmentUrl);
+        return axios.get('/shaders/fragment.glsl');
       })
       .then((res: AxiosResponse) => {
         fragmentShaderSource = res.data;
@@ -102,29 +102,8 @@ export default class Scene {
           throw new Error('Could not initialize shader program.');
         }
 
-        return shaderProgram;
+        this.shaderProgram = shaderProgram;
       });
-  }
-
-  public initSkyboxShaderProgram(): Promise<void> {
-    return this.initShaderProgram('/shaders/cube-map-vertex.glsl', '/shaders/skybox-fragment.glsl')
-      .then((shaderProgram: WebGLProgram) => {
-        this.skyBoxShaderProgram = shaderProgram
-      });
-  }
-
-  public bindModelTexture(model: Model): void {
-    let texture: WebGLTexture;
-
-    texture = this.gl.createTexture();
-
-    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, model.texture);
-    this.gl.generateMipmap(this.gl.TEXTURE_2D);
-
-    this.gl.activeTexture(this.gl.TEXTURE0);
   }
 
   public bindCubeTexture(cube: Cube): void {
@@ -133,8 +112,8 @@ export default class Scene {
     texture = this.gl.createTexture();
 
     this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, texture);
-    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
     this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
     this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
@@ -178,7 +157,7 @@ export default class Scene {
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, model.indices, this.gl.DYNAMIC_DRAW);
   }
 
-  private sendMatrixUniforms(model: Model, shaderProgram: WebGLProgram): void {
+  private sendMatrixUniforms(model: Model): void {
     interface uniform {
       name: string;
       matrix: mat4;
@@ -195,20 +174,25 @@ export default class Scene {
 
     uniforms.forEach((u: uniform) => {
       let uniformLocation: WebGLUniformLocation;
-      uniformLocation = this.gl.getUniformLocation(shaderProgram, u.name);
+      uniformLocation = this.gl.getUniformLocation(this.shaderProgram, u.name);
       this.gl.uniformMatrix4fv(uniformLocation, false, u.matrix);
     });
   }
 
   private sendSkyboxUniforms(skyBox: Cube): void {
+    let uUseTexture: WebGLUniformLocation;
     let uSampler: WebGLUniformLocation;
 
-    this.sendMatrixUniforms(skyBox, this.skyBoxShaderProgram);
-    uSampler = this.gl.getUniformLocation(this.skyBoxShaderProgram, 'u_Sampler');
+    this.sendMatrixUniforms(skyBox);
+
+    uUseTexture = this.gl.getUniformLocation(this.shaderProgram, 'u_UseTexture');
+    this.gl.uniform1i(uUseTexture, Number(skyBox.useTexture));
+
+    uSampler = this.gl.getUniformLocation(this.shaderProgram, 'u_Sampler');
     this.gl.uniform1i(uSampler, 0);
   }
 
-  private sendUniformData(model: Model, shaderProgram: WebGLProgram): void {
+  private sendUniformData(model: Model): void {
     let uUseLighting: WebGLUniformLocation;
     let uUseTexture: WebGLUniformLocation;
 
@@ -221,36 +205,36 @@ export default class Scene {
     let cameraEye: WebGLUniformLocation;
     let cameraAt: WebGLUniformLocation;
 
-    this.sendMatrixUniforms(model, shaderProgram);
+    this.sendMatrixUniforms(model);
 
-    uUseLighting = this.gl.getUniformLocation(shaderProgram, 'u_UseLighting');
+    uUseLighting = this.gl.getUniformLocation(this.shaderProgram, 'u_UseLighting');
     this.gl.uniform1i(uUseLighting, Number(model.useLighting));
 
-    uUseTexture = this.gl.getUniformLocation(shaderProgram, 'u_UseTexture');
+    uUseTexture = this.gl.getUniformLocation(this.shaderProgram, 'u_UseTexture');
     this.gl.uniform1i(uUseTexture, Number(model.useTexture));
 
-    uAmbientMaterialColor = this.gl.getUniformLocation(shaderProgram, 'u_AmbientMaterialColor');
+    uAmbientMaterialColor = this.gl.getUniformLocation(this.shaderProgram, 'u_AmbientMaterialColor');
     this.gl.uniform3fv(uAmbientMaterialColor, model.ambientMaterialColor);
 
-    uLambertianMaterialColor = this.gl.getUniformLocation(shaderProgram, 'u_LambertianMaterialColor');
+    uLambertianMaterialColor = this.gl.getUniformLocation(this.shaderProgram, 'u_LambertianMaterialColor');
     this.gl.uniform3fv(uLambertianMaterialColor, model.lambertianMaterialColor);
 
-    uSpecularMaterialColor = this.gl.getUniformLocation(shaderProgram, 'u_SpecularMaterialColor');
+    uSpecularMaterialColor = this.gl.getUniformLocation(this.shaderProgram, 'u_SpecularMaterialColor');
     this.gl.uniform3fv(uSpecularMaterialColor, model.specularMaterialColor);
 
-    cameraEye = this.gl.getUniformLocation(shaderProgram, 'cameraEye');
+    cameraEye = this.gl.getUniformLocation(this.shaderProgram, 'cameraEye');
     this.gl.uniform3fv(cameraEye, this.camera.getEye());
 
-    cameraAt = this.gl.getUniformLocation(shaderProgram, 'cameraAt');
+    cameraAt = this.gl.getUniformLocation(this.shaderProgram, 'cameraAt');
     this.gl.uniform3fv(cameraAt, this.camera.getAt());
 
-    uSampler = this.gl.getUniformLocation(shaderProgram, 'u_Sampler');
+    uSampler = this.gl.getUniformLocation(this.shaderProgram, 'u_Sampler');
     this.gl.uniform1i(uSampler, 0);
   }
 
   public renderSkyBox(skyBox: Cube): void {
-    this.gl.useProgram(this.skyBoxShaderProgram);
-    this.sendAttributeData(skyBox, this.skyBoxShaderProgram);
+    this.gl.useProgram(this.shaderProgram);
+    this.sendAttributeData(skyBox, this.shaderProgram);
     this.sendSkyboxUniforms(skyBox);
     if (skyBox.useTexture) this.bindCubeTexture(skyBox);
 

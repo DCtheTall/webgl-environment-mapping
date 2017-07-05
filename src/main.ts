@@ -12,10 +12,11 @@ const scene = new Scene(canvas);
 // });
 
 const skyBox = new Cube({
+  useLighting: false,
   ambientMaterialColor: vec3.fromValues(0.5, 0.5, 0.5),
 });
 
-scene.initSkyboxShaderProgram()
+scene.initShaderProgram()
   // .then(() => teapot.loadOBJFile('/teapot.obj'))
   .then(() => skyBox.loadCubeTexture({
     top: '/sky-box/top.png',
@@ -27,8 +28,8 @@ scene.initSkyboxShaderProgram()
   }))
   // .then(() => skyBox.loadImageForTexture('/red.png'))
   .then(() => {
-    skyBox.rotate(-Math.PI / 8, vec3.fromValues(0, 1, 0));
-    skyBox.scale(10);
+    skyBox.rotate(-Math.PI / 96, vec3.fromValues(0, 1, 0));
+    skyBox.scale(20);
     scene.renderSkyBox(skyBox);
   })
   .catch(console.error);

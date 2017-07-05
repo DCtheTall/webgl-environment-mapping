@@ -10,11 +10,11 @@ uniform vec3 u_SpecularMaterialColor;
 uniform vec3 cameraEye;
 uniform vec3 cameraAt;
 
-uniform sampler2D u_Sampler;
+uniform samplerCube u_Sampler;
 
 varying vec3 v_Position;
 varying vec3 v_Normal;
-varying vec2 v_TexCoord;
+varying vec3 v_TexDirection;
 
 void main() {
   vec3 ambientLightColor;
@@ -33,7 +33,7 @@ void main() {
   lambertianLightColor = vec3(0.7, 0.75, 1.0);
   specularLightColor = vec3(1.0, 1.0, 1.0);
 
-  color = vec3(0.0, 0.0, 0.0);
+  color = vec3(1.0, 1.0, 1.0);
 
   if (u_UseLighting) {
     color += u_AmbientMaterialColor * ambientLightColor;
@@ -47,7 +47,7 @@ void main() {
   }
 
   if (u_UseTexture) {
-    color *= vec3(texture2D(u_Sampler, v_TexCoord).xyz);
+    color *= vec3(textureCube(u_Sampler, v_TexDirection).xyz);
   }
 
   if (u_UseLighting) {

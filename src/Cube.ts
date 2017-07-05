@@ -1,20 +1,8 @@
-import Model, { ModelOptions } from './Model';
+import Model, { ModelOptions, CubeTexture } from './Model';
 import * as BluebirdPromise from 'bluebird';
 import axios from 'axios';
 
-interface CubeTexture<T> {
-  [index: string]: T;
-  front: T;
-  back: T;
-  left: T;
-  right: T;
-  top: T;
-  bottom: T;
-}
-
 export default class Cube extends Model {
-  public cubeTexture: CubeTexture<any>;
-
   constructor(opts?: ModelOptions) {
     super(opts);
     this.cubeTexture = {
@@ -92,17 +80,5 @@ export default class Cube extends Model {
       20, 23, 22, // bottom face
       22, 21, 20,
     ]);
-  }
-
-  public loadCubeTexture(cubeTextureUrls: CubeTexture<string>): Promise<void> {
-    this.useTexture = true;
-
-    return BluebirdPromise.all(
-      Object.keys(this.cubeTexture).map((key: string) => new BluebirdPromise((resolve: () => {}) => {
-        this.cubeTexture[key] = new Image();
-        this.cubeTexture[key].src = cubeTextureUrls[key];
-        this.cubeTexture[key].onload = resolve;
-      }))
-    );
   }
 }
