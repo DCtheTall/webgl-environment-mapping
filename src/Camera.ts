@@ -15,10 +15,10 @@ export default class Camera {
 
   public perspectiveMat: mat4;
 
-  constructor() {
-    this.eye = vec3.fromValues(0, 0, 10);
-    this.at = vec3.fromValues(0, 0, -100);
-    this.up = vec3.fromValues(0, 1, 0);
+  constructor(eye?: vec3, at?: vec3, up?: vec3) {
+    this.eye = eye || vec3.fromValues(0, 0, 1);
+    this.at = at || vec3.fromValues(0, 0, -1);
+    this.up = up || vec3.fromValues(0, 1, 0);
 
     this.perspectiveMat = mat4.perspective(mat4.create(), this._ASPECT_RATIO, this._FOVY, this._NEAR, this._FAR);
   }
@@ -31,12 +31,17 @@ export default class Camera {
     return this.at;
   }
 
+  public getUp(): vec3 {
+    return this.up;
+  }
+
   public getLookAt(): mat4 {
     return mat4.lookAt(mat4.create(), this.eye, this.at, this.up);
   }
 
-  public setEye(x: number, y: number, z: number): void {
-    this.eye = vec3.set(this.eye, x, y, z);
+  public setEye(x: number|vec3, y?: number, z?: number): void {
+    if (typeof x === 'number') this.eye = vec3.set(this.eye, x, y, z);
+    else this.eye = x;
   }
 
   public setAt(x: number, y: number, z: number): void {

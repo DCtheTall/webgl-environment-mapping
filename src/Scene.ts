@@ -24,13 +24,9 @@ export default class Scene {
   private textureBuffer: WebGLBuffer;
   private textureIndexBuffer: WebGLBuffer;
 
+  private frameBuffer: WebGLBuffer;
+
   constructor(canvas: HTMLCanvasElement) {
-    let sideLength: number;
-
-    sideLength = window.innerWidth >= 400 ? 400 : 200;
-    canvas.width = sideLength;
-    canvas.height = sideLength;
-
     this.gl = <WebGLRenderingContext>(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
     this.gl.viewport(0, 0, canvas.width, canvas.height);
     this.gl.clearColor(0, 0, 0, 0);
@@ -38,16 +34,13 @@ export default class Scene {
     this.gl.enable(this.gl.DEPTH_TEST);
     this.gl.depthFunc(this.gl.LEQUAL);
 
-    this.camera = new Camera();
-
     this.vertexBuffer = this.gl.createBuffer();
     this.vertexIndicesBuffer = this.gl.createBuffer();
-
     this.normalBuffer = this.gl.createBuffer();
     this.normalIndexBuffer = this.gl.createBuffer();
-
     this.textureBuffer = this.gl.createBuffer();
     this.textureIndexBuffer = this.gl.createBuffer();
+    this.frameBuffer = this.gl.createFramebuffer();
   }
 
   private compileShader(shaderSource: string, shaderType: number): WebGLShader {
@@ -65,6 +58,10 @@ export default class Scene {
     }
 
     return shader;
+  }
+
+  public addCamera(camera: Camera): void {
+    this.camera = camera;
   }
 
   public initShaderProgram(): Promise<void> {
@@ -138,20 +135,12 @@ export default class Scene {
   private sendAttributeData(model: Model, shaderProgram: WebGLProgram): void {
     let aPosition: number;
     let aNormal: number;
-    let aTexCoord: number;
-    let aTexDirection: number;
 
     aPosition = this.gl.getAttribLocation(shaderProgram, 'a_Position');
     aNormal = this.gl.getAttribLocation(shaderProgram, 'a_Normal');
-    if (model.textureUVs) aTexCoord = this.gl.getAttribLocation(shaderProgram, 'a_TexCoord');
-    if (model.texDirections) aTexDirection = this.gl.getAttribLocation(shaderProgram, 'a_TexDirection');
 
     this.sendVecAttribute(3, this.vertexBuffer, aPosition, model.vertices);
     this.sendVecAttribute(3, this.normalBuffer, aNormal, model.normals);
-
-    if (model.textureUVs) {
-      this.sendVecAttribute(2, this.textureBuffer, aTexCoord, model.textureUVs);
-    }
 
     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.normalIndexBuffer);
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, model.indices, this.gl.DYNAMIC_DRAW);
@@ -192,7 +181,7 @@ export default class Scene {
     this.gl.uniform1i(uSampler, 0);
   }
 
-  private sendUniformData(model: Model): void {
+  private sendModelUniforms(model: Model): void {
     let uUseLighting: WebGLUniformLocation;
     let uUseTexture: WebGLUniformLocation;
 
@@ -239,5 +228,9 @@ export default class Scene {
     if (skyBox.useTexture) this.bindCubeTexture(skyBox);
 
     this.gl.drawElements(this.gl.TRIANGLES, skyBox.indices.length, this.gl.UNSIGNED_SHORT, 0);
+  }
+
+  public renderReflectiveObject(model: Model): void {
+    // TODO
   }
 }

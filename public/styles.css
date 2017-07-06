@@ -16,13 +16,13 @@ p {
 canvas {
   background: #000;
   margin: 0 auto;
-  height: 400px;
-  width: 400px;
+  height: 500px;
+  width: 500px;
 }
 
-@media (max-device-width: 400px) {
+@media (max-device-width: 500px) {
   canvas {
-    height: 200px;
-    width: 200px;
+    height: 250px;
+    width: 250px;
   }
 }

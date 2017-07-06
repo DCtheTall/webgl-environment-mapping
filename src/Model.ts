@@ -4,6 +4,8 @@ import {
   vec3,
   mat4,
 } from 'gl-matrix';
+import CubeFaces from './CubeFaces';
+import CubeCamera from './CubeCamera';
 import * as OBJ from 'webgl-obj-loader';
 
 export interface ModelOptions {
@@ -13,22 +15,11 @@ export interface ModelOptions {
   specularMaterialColor?: vec3;
 }
 
-export interface CubeTexture<T> {
-  [index: string]: T;
-  front: T;
-  back: T;
-  left: T;
-  right: T;
-  top: T;
-  bottom: T;
-}
-
 export default class Model {
   private position: vec3;
 
   private scaleMatrix: mat4;
   private rotationMatrix: mat4;
-  private translationMatrix: mat4;
 
   public useTexture: boolean;
   public useLighting: boolean;
@@ -42,8 +33,9 @@ export default class Model {
   public ambientMaterialColor: vec3;
   public lambertianMaterialColor: vec3;
   public specularMaterialColor: vec3;
-  
-  public cubeTexture: CubeTexture<any>;
+
+  public cubeCamera: CubeCamera;
+  public cubeTexture: CubeFaces<any>;
 
   constructor(opts?: ModelOptions) {
     this.useTexture = false;
@@ -52,11 +44,14 @@ export default class Model {
     this.position = vec3.fromValues(0, 0, 0);
     this.scaleMatrix = mat4.create();
     this.rotationMatrix = mat4.create();
-    this.translationMatrix = mat4.create();
 
-    this.ambientMaterialColor = opts && opts.ambientMaterialColor ? opts.ambientMaterialColor : vec3.fromValues(1, 1, 1);
+    this.ambientMaterialColor = opts && opts.ambientMaterialColor ? opts.ambientMaterialColor : vec3.fromValues(0, 0, 0);
     this.lambertianMaterialColor = opts && opts.lambertianMaterialColor ? opts.lambertianMaterialColor : vec3.fromValues(1, 1, 1);
     this.specularMaterialColor = opts && opts.specularMaterialColor ? opts.specularMaterialColor : vec3.fromValues(1, 1, 1);
+  }
+
+  public addCubeCamera(): void {
+    this.cubeCamera = new CubeCamera();
   }
 
   public loadOBJFile(url: string): Promise<void> {
@@ -79,9 +74,8 @@ export default class Model {
       .catch(console.error);
   }
 
-  public loadCubeTexture(cubeTextureUrls: CubeTexture<string>): Promise<void> {
+  public loadCubeTexture(cubeTextureUrls: CubeFaces<string>): Promise<void> {
     this.useTexture = true;
-
     return BluebirdPromise.all(
       Object.keys(this.cubeTexture).map((key: string) => new BluebirdPromise((resolve: () => {}) => {
         this.cubeTexture[key] = new Image();
@@ -92,8 +86,7 @@ export default class Model {
   }
 
   public scale(s: number) {
-    this.scaleMatrix = mat4.set(
-      mat4.create(),
+    this.scaleMatrix = mat4.fromValues(
       s, 0, 0, 0,
       0, s, 0, 0,
       0, 0, s, 0,
@@ -104,23 +97,34 @@ export default class Model {
   public translate(dx: number|vec3, dy?: number, dz?: number): void {
     if (typeof dx === 'number') {
       this.position = vec3.add(vec3.create(), vec3.fromValues(dx, dy, dz), this.position);
+      if (this.cubeCamera) this.cubeCamera.translate(dx, dy, dz);
     } else {
       this.position = vec3.add(vec3.create(), dx, this.position);
+      if (this.cubeCamera) this.cubeCamera.translate(dx);
     }
   }
 
   public rotate(rad: number, axis: vec3): void {
     this.rotationMatrix = mat4.multiply(mat4.create(), mat4.fromRotation(mat4.create(), rad, axis), this.rotationMatrix);
+    if (this.cubeCamera) this.cubeCamera.rotate(rad, axis);
+  }
+
+  private translationMatrix(): mat4 {
+    return mat4.fromValues(
+      1, 0, 0, this.position[0],
+      0, 1, 0, this.position[1],
+      0, 0, 1, this.position[2],
+      0, 0, 0, 1
+    );
   }
 
   public modelMat(): mat4 {
     let rotateScaleMatrix: mat4 = mat4.multiply(mat4.create(), this.rotationMatrix, this.scaleMatrix);
-    return mat4.multiply(mat4.create(), this.translationMatrix, rotateScaleMatrix);
+    return mat4.multiply(mat4.create(), this.translationMatrix(), rotateScaleMatrix);
   }
 
   public normalMat(): mat4 {
     let invertedModelMat: mat4;
-
     invertedModelMat = mat4.invert(mat4.create(), this.modelMat());
     return mat4.transpose(mat4.create(), invertedModelMat);
   }

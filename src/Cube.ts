@@ -1,4 +1,4 @@
-import Model, { ModelOptions, CubeTexture } from './Model';
+import Model, { ModelOptions } from './Model';
 import * as BluebirdPromise from 'bluebird';
 import axios from 'axios';
 
