@@ -13,6 +13,7 @@ export interface ModelOptions {
   ambientMaterialColor?: vec3;
   lambertianMaterialColor?: vec3;
   specularMaterialColor?: vec3;
+  isSkybox?: boolean;
 }
 
 export default class Model {
@@ -23,6 +24,7 @@ export default class Model {
 
   public useTexture: boolean;
   public useLighting: boolean;
+  public isSkybox: boolean;
 
   public vertices: Float32Array;
   public normals: Float32Array;
@@ -39,7 +41,8 @@ export default class Model {
 
   constructor(opts?: ModelOptions) {
     this.useTexture = false;
-    this.useLighting = opts !== undefined && opts.useLighting ? opts.useLighting : true;
+    this.useLighting = opts && opts.useLighting ? opts.useLighting : true;
+    this.isSkybox = opts && opts.isSkybox ? opts.isSkybox : false;
 
     this.position = vec3.fromValues(0, 0, 0);
     this.scaleMatrix = mat4.create();
@@ -51,7 +54,8 @@ export default class Model {
   }
 
   public addCubeCamera(): void {
-    this.cubeCamera = new CubeCamera();
+    this.useTexture = true;
+    this.cubeCamera = new CubeCamera(this.position);
   }
 
   public loadOBJFile(url: string): Promise<void> {
@@ -75,7 +79,7 @@ export default class Model {
   }
 
   public loadCubeTexture(cubeTextureUrls: CubeFaces<string>): Promise<void> {
-    this.useTexture = true;
+    this.useTexture = true
     return BluebirdPromise.all(
       Object.keys(this.cubeTexture).map((key: string) => new BluebirdPromise((resolve: () => {}) => {
         this.cubeTexture[key] = new Image();
@@ -97,24 +101,21 @@ export default class Model {
   public translate(dx: number|vec3, dy?: number, dz?: number): void {
     if (typeof dx === 'number') {
       this.position = vec3.add(vec3.create(), vec3.fromValues(dx, dy, dz), this.position);
-      if (this.cubeCamera) this.cubeCamera.translate(dx, dy, dz);
     } else {
       this.position = vec3.add(vec3.create(), dx, this.position);
-      if (this.cubeCamera) this.cubeCamera.translate(dx);
     }
   }
 
   public rotate(rad: number, axis: vec3): void {
     this.rotationMatrix = mat4.multiply(mat4.create(), mat4.fromRotation(mat4.create(), rad, axis), this.rotationMatrix);
-    if (this.cubeCamera) this.cubeCamera.rotate(rad, axis);
   }
 
   private translationMatrix(): mat4 {
     return mat4.fromValues(
-      1, 0, 0, this.position[0],
-      0, 1, 0, this.position[1],
-      0, 0, 1, this.position[2],
-      0, 0, 0, 1
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      this.position[0], this.position[1], this.position[2], 1
     );
   }
 

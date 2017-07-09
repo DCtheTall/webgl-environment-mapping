@@ -7,8 +7,8 @@ uniform vec3 u_AmbientMaterialColor;
 uniform vec3 u_LambertianMaterialColor;
 uniform vec3 u_SpecularMaterialColor;
 
-uniform vec3 cameraEye;
-uniform vec3 cameraAt;
+uniform vec3 u_CameraEye;
+uniform vec3 u_CameraAt;
 
 uniform samplerCube u_Sampler;
 
@@ -51,7 +51,7 @@ void main() {
   }
 
   if (u_UseLighting) {
-    viewDir = normalize(cameraEye - cameraAt);
+    viewDir = normalize(u_CameraEye - u_CameraAt);
     halfVec = normalize(lightDir + viewDir);
     blinnPhong = pow(dot(halfVec, normalize(v_Normal)), 300.0);
 

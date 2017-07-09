@@ -9,6 +9,8 @@ uniform mat4 u_NormalMat;
 uniform mat4 u_PerspectiveMat;
 uniform mat4 u_ViewMat;
 
+uniform bool u_IsSkybox;
+
 varying vec3 v_Position;
 varying vec3 v_Normal;
 varying vec3 v_TexDirection;
@@ -20,7 +22,11 @@ void main() {
   transformedPosition = u_ModelMat * vec4(a_Position, 1.0);
   v_Position = vec3(transformedPosition.xyz);
 
-  v_TexDirection = a_Position;
+  if (u_IsSkybox) {
+    v_TexDirection = a_Position;
+  } else {
+    v_TexDirection = v_Position;
+  }
 
   transformedNormal = u_NormalMat * vec4(a_Normal, 1.0);
   v_Normal = vec3(transformedNormal.xyz);

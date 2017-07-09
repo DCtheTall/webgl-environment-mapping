@@ -11,15 +11,15 @@ export default class CubeCamera {
 
   public cameras: CubeFaces<Camera>;
 
-  constructor() {
-    this.position = vec3.fromValues(0, 0, 0);
+  constructor(position: vec3) {
+    this.position = position;
     this.cameras = {
-      top: new Camera(),
-      bottom: new Camera(),
-      left: new Camera(),
-      right: new Camera(),
-      front: new Camera(),
-      back: new Camera(),
+      top: new Camera(position, vec3.fromValues(0, 1, 0), vec3.fromValues(0, 0, 1)),
+      bottom: new Camera(position, vec3.fromValues(0, -1, 0), vec3.fromValues(0, 0, -1)),
+      left: new Camera(position, vec3.fromValues(-1, 0, 0), vec3.fromValues(0, 1, 0)),
+      right: new Camera(position, vec3.fromValues(1, 0, 0), vec3.fromValues(0, 1, 0)),
+      front: new Camera(position, vec3.fromValues(0, 0, 1), vec3.fromValues(0, 1, 0)),
+      back: new Camera(position, vec3.fromValues(0, 0, -1), vec3.fromValues(0, 1, 0)),
     };
   }
 

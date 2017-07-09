@@ -16,7 +16,7 @@ export default class Camera {
   public perspectiveMat: mat4;
 
   constructor(eye?: vec3, at?: vec3, up?: vec3) {
-    this.eye = eye || vec3.fromValues(0, 0, 1);
+    this.eye = eye || vec3.fromValues(0, 0, 10);
     this.at = at || vec3.fromValues(0, 0, -1);
     this.up = up || vec3.fromValues(0, 1, 0);
 
@@ -51,5 +51,4 @@ export default class Camera {
   public setUp(x: number, y: number, z: number): void {
     this.up = vec3.set(this.up, x, y, z);
   }
-
 }
