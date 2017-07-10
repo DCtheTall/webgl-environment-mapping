@@ -13,7 +13,6 @@ export interface ModelOptions {
   ambientMaterialColor?: vec3;
   lambertianMaterialColor?: vec3;
   specularMaterialColor?: vec3;
-  isSkybox?: boolean;
 }
 
 export default class Model {
@@ -24,7 +23,6 @@ export default class Model {
 
   public useTexture: boolean;
   public useLighting: boolean;
-  public isSkybox: boolean;
 
   public vertices: Float32Array;
   public normals: Float32Array;
@@ -42,13 +40,12 @@ export default class Model {
   constructor(opts?: ModelOptions) {
     this.useTexture = false;
     this.useLighting = opts && opts.useLighting ? opts.useLighting : true;
-    this.isSkybox = opts && opts.isSkybox ? opts.isSkybox : false;
 
     this.position = vec3.fromValues(0, 0, 0);
     this.scaleMatrix = mat4.create();
     this.rotationMatrix = mat4.create();
 
-    this.ambientMaterialColor = opts && opts.ambientMaterialColor ? opts.ambientMaterialColor : vec3.fromValues(0, 0, 0);
+    this.ambientMaterialColor = opts && opts.ambientMaterialColor ? opts.ambientMaterialColor : vec3.fromValues(0.5, 0.5, 0.5);
     this.lambertianMaterialColor = opts && opts.lambertianMaterialColor ? opts.lambertianMaterialColor : vec3.fromValues(1, 1, 1);
     this.specularMaterialColor = opts && opts.specularMaterialColor ? opts.specularMaterialColor : vec3.fromValues(1, 1, 1);
   }

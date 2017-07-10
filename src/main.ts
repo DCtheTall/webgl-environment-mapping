@@ -11,20 +11,16 @@ sideLength = window.innerWidth >= 500 ? 500 : 250;
 canvas.width = sideLength;
 canvas.height = sideLength;
 
-const scene = new Scene(canvas);
-const skyBox = new Cube({
-  isSkybox: true,
-  useLighting: false,
-  ambientMaterialColor: vec3.fromValues(0.5, 0.5, 0.5),
-});
+const skyBox = new Cube();
 const reflectiveModel = new Model();
 const camera = new Camera();
+const scene = new Scene(canvas);
 
 skyBox.scale(20);
 
 reflectiveModel.addCubeCamera();
 reflectiveModel.translate(0, -2, 0);
-reflectiveModel.rotate(-Math.PI / 2, vec3.fromValues(1, 0, 0));
+reflectiveModel.rotate(-Math.PI / 2.2, vec3.fromValues(1, 0, 0));
 reflectiveModel.scale(0.1);
 
 function render(): void {
@@ -34,10 +30,10 @@ function render(): void {
 }
 
 scene.addCamera(camera);
-scene.addModel(skyBox);
+scene.addSkyBox(skyBox);
 scene.addReflectiveModel(reflectiveModel);
 scene
-  .initShaderProgram()
+  .loadShaders()
   .then(() => reflectiveModel.loadOBJFile('/teapot.obj'))
   .then(() => skyBox.loadCubeTexture({
     top: '/sky-box/top.png',
