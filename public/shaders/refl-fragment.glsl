@@ -3,8 +3,9 @@ precision mediump float;
 uniform vec3 u_AmbientMaterialColor;
 uniform vec3 u_LambertianMaterialColor;
 uniform vec3 u_SpecularMaterialColor;
-
 uniform vec3 u_CameraEye;
+
+uniform float u_TextureWeight;
 
 uniform samplerCube u_Sampler;
 
@@ -24,9 +25,9 @@ void main() {
   vec3 halfVec;
   float blinnPhong;
 
-  ambientLightColor = vec3(0.7, 0.75, 1.0);
-  lightPosition = vec3(-50, 100, 30);
-  lambertianLightColor = vec3(0.7, 0.75, 1.0);
+  ambientLightColor = vec3(0.7, 0.8, 1.0);
+  lightPosition = vec3(-25, 100, 30);
+  lambertianLightColor = vec3(1.0, 0.9, 0.8);
   specularLightColor = vec3(1.0, 1.0, 1.0);
 
   color = vec3(0.0, 0.0, 0.0);
@@ -38,7 +39,7 @@ void main() {
 
   viewDir = normalize(u_CameraEye - v_Position);
   texDirection = -reflect(viewDir, v_Normal);
-  color *= vec3(textureCube(u_Sampler, texDirection).xyz);
+  color = (u_TextureWeight * vec3(textureCube(u_Sampler, texDirection).xyz)) + ((1.0 - u_TextureWeight) * color);
 
   halfVec = normalize(lightDir + viewDir);
   blinnPhong = pow(dot(halfVec, normalize(v_Normal)), 300.0);

@@ -14,6 +14,7 @@ p {
 }
 
 canvas {
+  cursor: move;
   background: #000;
   margin: 0 auto;
   height: 500px;

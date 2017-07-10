@@ -9,10 +9,10 @@ import CubeCamera from './CubeCamera';
 import * as OBJ from 'webgl-obj-loader';
 
 export interface ModelOptions {
-  useLighting?: boolean;
   ambientMaterialColor?: vec3;
   lambertianMaterialColor?: vec3;
   specularMaterialColor?: vec3;
+  textureWeight?: number;
 }
 
 export default class Model {
@@ -21,37 +21,31 @@ export default class Model {
   private scaleMatrix: mat4;
   private rotationMatrix: mat4;
 
-  public useTexture: boolean;
-  public useLighting: boolean;
-
   public vertices: Float32Array;
   public normals: Float32Array;
   public textureUVs: Float32Array;
-  public texDirections: Float32Array;
   public indices: Uint16Array;
 
   public ambientMaterialColor: vec3;
   public lambertianMaterialColor: vec3;
   public specularMaterialColor: vec3;
+  public textureWeight: number;
 
   public cubeCamera: CubeCamera;
   public cubeTexture: CubeFaces<any>;
 
   constructor(opts?: ModelOptions) {
-    this.useTexture = false;
-    this.useLighting = opts && opts.useLighting ? opts.useLighting : true;
-
     this.position = vec3.fromValues(0, 0, 0);
     this.scaleMatrix = mat4.create();
     this.rotationMatrix = mat4.create();
 
-    this.ambientMaterialColor = opts && opts.ambientMaterialColor ? opts.ambientMaterialColor : vec3.fromValues(0.5, 0.5, 0.5);
+    this.ambientMaterialColor = opts && opts.ambientMaterialColor ? opts.ambientMaterialColor : vec3.fromValues(0.3, 0.3, 0.3);
     this.lambertianMaterialColor = opts && opts.lambertianMaterialColor ? opts.lambertianMaterialColor : vec3.fromValues(1, 1, 1);
     this.specularMaterialColor = opts && opts.specularMaterialColor ? opts.specularMaterialColor : vec3.fromValues(1, 1, 1);
+    this.textureWeight = opts && opts.textureWeight ? opts.textureWeight : 1;
   }
 
   public addCubeCamera(): void {
-    this.useTexture = true;
     this.cubeCamera = new CubeCamera(this.position);
   }
 
@@ -76,7 +70,6 @@ export default class Model {
   }
 
   public loadCubeTexture(cubeTextureUrls: CubeFaces<string>): Promise<void> {
-    this.useTexture = true
     return BluebirdPromise.all(
       Object.keys(this.cubeTexture).map((key: string) => new BluebirdPromise((resolve: () => {}) => {
         this.cubeTexture[key] = new Image();

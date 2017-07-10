@@ -251,12 +251,12 @@ export default class Scene {
     this.sendSamplerUniform(this.skyboxShaderProgram);
   }
 
-  private sendModelUniforms(shaderProgram: WebGLProgram, model: Model, camera: Camera): void {
+  private sendModelUniforms(shaderProgram: WebGLProgram, model: Model, camera: Camera, useTexture: boolean = false): void {
     let uAmbientMaterialColor: WebGLUniformLocation;
     let uLambertianMaterialColor: WebGLUniformLocation;
     let uSpecularMaterialColor: WebGLUniformLocation;
     let uCameraEye: WebGLUniformLocation;
-    let uSampler: WebGLUniformLocation;
+    let uTextureWeight: WebGLUniformLocation;
 
     this.sendMatrixUniforms(shaderProgram, [
       { name: 'u_ModelMat', matrix: model.modelMat() },
@@ -276,6 +276,11 @@ export default class Scene {
 
     uCameraEye = this.gl.getUniformLocation(shaderProgram, 'u_CameraEye');
     this.gl.uniform3fv(uCameraEye, camera.getEye());
+
+    if (useTexture) {
+      uTextureWeight = this.gl.getUniformLocation(shaderProgram, 'u_TextureWeight');
+      this.gl.uniform1f(uTextureWeight, model.textureWeight);
+    }
 
     this.sendSamplerUniform(shaderProgram);
   }
@@ -334,7 +339,7 @@ export default class Scene {
 
     this.gl.useProgram(this.reflShaderProgram);
     this.sendModelAttributes(model);
-    this.sendModelUniforms(this.reflShaderProgram, model, this.camera);
+    this.sendModelUniforms(this.reflShaderProgram, model, this.camera, true);
 
     this.gl.drawElements(this.gl.TRIANGLES, model.indices.length, this.gl.UNSIGNED_SHORT, 0);
   }
