@@ -33,6 +33,9 @@ export default class Scene {
   private skyboxShaderProgram: WebGLProgram;
   private reflShaderProgram: WebGLProgram;
 
+  private skyboxTexture: WebGLTexture;
+  private reflectionTexture: WebGLTexture;
+
   private vertexBuffer: WebGLBuffer;
   private normalBuffer: WebGLBuffer;
   private indicesBuffer: WebGLBuffer;
@@ -44,9 +47,9 @@ export default class Scene {
     this.gl = <WebGLRenderingContext>(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
     this.gl.clearColor(0, 0, 0, 1);
     this.gl.viewport(0, 0, canvas.width, canvas.height);
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     this.gl.enable(this.gl.DEPTH_TEST);
     this.gl.depthFunc(this.gl.LEQUAL);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
     this.models = [];
     this.glTextureCubeFaces = {
@@ -89,6 +92,20 @@ export default class Scene {
 
   public addSkyBox(skyBox: Cube): void {
     this.skyBox = skyBox;
+    this.skyboxTexture = this.gl.createTexture();
+
+    this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, this.skyboxTexture);
+    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
+    Object.keys(this.glTextureCubeFaces).forEach((key: string) => {
+      this.gl.texImage2D(this.glTextureCubeFaces[key], 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.skyBox.cubeTexture[key]);
+    });
+
+    this.gl.generateMipmap(this.gl.TEXTURE_CUBE_MAP);
+    this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, null);
   }
 
   public addModel(model: Model): void {
@@ -97,6 +114,20 @@ export default class Scene {
 
   public addReflectiveModel(model: Model): void {
     this.reflectiveModel = model;
+
+    this.reflectionTexture = this.gl.createTexture();
+
+    this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, this.reflectionTexture);
+    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
+    Object.keys(this.glTextureCubeFaces).forEach((key: string) => {
+      let frameBuffer: Framebuffer;
+      frameBuffer = this.frameBuffers[key];
+      this.gl.texImage2D(this.glTextureCubeFaces[key], 0, this.gl.RGBA, frameBuffer.width, frameBuffer.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+    });
   }
 
   private compileShader(shaderSource: string, shaderType: number): WebGLShader {
@@ -249,30 +280,11 @@ export default class Scene {
     this.sendSamplerUniform(shaderProgram);
   }
 
-  private bindCubeTexture(model: Model): void {
-    let texture: WebGLTexture;
-
-    texture = this.gl.createTexture();
-
-    this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, texture);
-    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-    Object.keys(this.glTextureCubeFaces).forEach((key: string) => {
-      this.gl.texImage2D(this.glTextureCubeFaces[key], 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, model.cubeTexture[key]);
-    });
-    this.gl.generateMipmap(this.gl.TEXTURE_CUBE_MAP);
-
-    this.gl.activeTexture(this.gl.TEXTURE0);
-  }
-
   private renderSkyBox(camera: Camera): void {
     this.gl.useProgram(this.skyboxShaderProgram);
     this.sendSkyboxAttributes();
     this.sendSkyboxUniforms(camera);
-    this.bindCubeTexture(this.skyBox);
+    this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, this.skyboxTexture);
 
     this.gl.drawElements(this.gl.TRIANGLES, this.skyBox.indices.length, this.gl.UNSIGNED_SHORT, 0);
   }
@@ -283,27 +295,13 @@ export default class Scene {
     if (_camera) camera = _camera;
     else camera = this.camera;
 
-    this.renderSkyBox(camera);
+    if (this.skyBox) this.renderSkyBox(camera);
   }
 
   private renderReflectiveObject(): void {
     let model: Model;
-    let texture: WebGLTexture;
 
     model = this.reflectiveModel;
-    texture = this.gl.createTexture();
-
-    this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, texture);
-    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-    this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-    Object.keys(this.glTextureCubeFaces).forEach((key: string) => {
-      let frameBuffer: Framebuffer;
-      frameBuffer = this.frameBuffers[key];
-      this.gl.texImage2D(this.glTextureCubeFaces[key], 0, this.gl.RGBA, frameBuffer.width, frameBuffer.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-    })
 
     Object.keys(this.frameBuffers).forEach((key: string) => {
       let frameBuffer: Framebuffer;
@@ -317,7 +315,7 @@ export default class Scene {
       this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, frameBuffer);
       this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderBuffer);
       this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, frameBuffer.width, frameBuffer.height);
-      this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.glTextureCubeFaces[key], texture, 0);
+      this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.glTextureCubeFaces[key], this.reflectionTexture, 0);
       this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, renderBuffer);
 
       this.gl.viewport(0, 0, frameBuffer.width, frameBuffer.height);
@@ -330,7 +328,6 @@ export default class Scene {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
     this.gl.generateMipmap(this.gl.TEXTURE_CUBE_MAP);
-    this.gl.activeTexture(this.gl.TEXTURE0);
 
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);

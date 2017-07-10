@@ -26,11 +26,10 @@ reflectiveModel.scale(0.1);
 function render(): void {
   reflectiveModel.rotate(Math.PI / 60, vec3.fromValues(0, 1, 0));
   scene.render();
-  // window.requestAnimationFrame(render);
+  window.requestAnimationFrame(render);
 }
 
 scene.addCamera(camera);
-scene.addSkyBox(skyBox);
 scene.addReflectiveModel(reflectiveModel);
 scene
   .loadShaders()
@@ -43,5 +42,8 @@ scene
     front: '/sky-box/front.png',
     back: '/sky-box/back.png',
   }))
-  .then(() => render())
+  .then(() => {
+    scene.addSkyBox(skyBox); // load texture before this
+    render();
+  })
   .catch(console.error);
