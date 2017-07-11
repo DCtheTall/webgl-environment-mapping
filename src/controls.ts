@@ -1,4 +1,5 @@
 import Camera from './Camera';
+import Model from './Model';
 import { vec3 } from 'gl-matrix';
 
 function initOrbitControls(camera: Camera): void {
@@ -41,4 +42,35 @@ function initOrbitControls(camera: Camera): void {
   });
 }
 
-export default initOrbitControls;
+function initReflectiveModelControls(model: Model): () => void {
+  let angularVelocity: number;
+  let dTheta: number;
+
+  angularVelocity = 0;
+  dTheta = Math.PI / 480;
+
+  document.addEventListener('keydown', (event: any) => {
+    switch (event.keyCode) {
+      case 37: // left
+        angularVelocity -= dTheta;
+        return;
+      case 39: // right
+        angularVelocity += dTheta;
+        return;
+      case 38: // up
+        model.rotate(-Math.PI / 18, vec3.fromValues(1, 0, 0));
+        return;
+      case 40:
+        model.rotate(Math.PI / 18, vec3.fromValues(1, 0, 0));
+      default:
+        return;
+    }
+  });
+
+  return () => model.rotate(angularVelocity, vec3.fromValues(0, 1, 0));
+}
+
+export {
+  initOrbitControls,
+  initReflectiveModelControls,
+};
