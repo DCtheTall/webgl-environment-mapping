@@ -5,15 +5,6 @@ import axios from 'axios';
 export default class Cube extends Model {
   constructor(opts?: ModelOptions) {
     super(opts);
-    this.cubeTexture = {
-      top: null,
-      bottom: null,
-      left: null,
-      right: null,
-      front: null,
-      back: null,
-    };
-
     this.vertices = new Float32Array([
       -1, 1, 1,  // front face
       1, 1, 1,

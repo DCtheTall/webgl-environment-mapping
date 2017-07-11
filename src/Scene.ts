@@ -25,13 +25,14 @@ export default class Scene {
   private gl: WebGLRenderingContext;
   private camera: Camera;
   private skyBox: Cube;
-  private models: Model[];
+  private cubes: Cube[];
   private reflectiveModel: Model;
 
   private glTextureCubeFaces: CubeFaces<number>;
 
   private skyboxShaderProgram: WebGLProgram;
   private reflShaderProgram: WebGLProgram;
+  private cubeShaderProgram: WebGLProgram;
 
   private skyboxTexture: WebGLTexture;
   private reflectionTexture: WebGLTexture;
@@ -51,7 +52,6 @@ export default class Scene {
     this.gl.depthFunc(this.gl.LEQUAL);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-    this.models = [];
     this.glTextureCubeFaces = {
       left: this.gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
       right: this.gl.TEXTURE_CUBE_MAP_POSITIVE_X,
@@ -108,8 +108,8 @@ export default class Scene {
     this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, null);
   }
 
-  public addModel(model: Model): void {
-    this.models.push(model);
+  public addCubes(models: Cube[]): void {
+    this.cubes = models;
   }
 
   public addReflectiveModel(model: Model): void {
@@ -194,6 +194,10 @@ export default class Scene {
       })
       .then((shaderProgram: WebGLProgram) => {
         this.reflShaderProgram = shaderProgram;
+        return this.initShaderProgram('/shaders/cube-vertex.glsl', '/shaders/cube-fragment.glsl');
+      })
+      .then((shaderProgram: WebGLProgram) => {
+        this.cubeShaderProgram = shaderProgram;
       });
   }
 
@@ -214,12 +218,12 @@ export default class Scene {
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, this.skyBox.indices, this.gl.DYNAMIC_DRAW);
   }
 
-  private sendModelAttributes(model: Model): void {
+  private sendModelAttributes(shaderProgram: WebGLProgram, model: Model): void {
     let aPosition: number;
     let aNormal: number;
 
-    aPosition = this.gl.getAttribLocation(this.reflShaderProgram, 'a_Position');
-    aNormal = this.gl.getAttribLocation(this.reflShaderProgram, 'a_Normal');
+    aPosition = this.gl.getAttribLocation(shaderProgram, 'a_Position');
+    aNormal = this.gl.getAttribLocation(shaderProgram, 'a_Normal');
 
     this.sendVecAttribute(3, this.vertexBuffer, aPosition, model.vertices);
     this.sendVecAttribute(3, this.normalBuffer, aNormal, model.normals);
@@ -294,13 +298,20 @@ export default class Scene {
     this.gl.drawElements(this.gl.TRIANGLES, this.skyBox.indices.length, this.gl.UNSIGNED_SHORT, 0);
   }
 
+  private renderCubes(camera: Camera): void {
+    this.gl.useProgram(this.cubeShaderProgram);
+    this.cubes.forEach((model: Cube) => {
+      this.sendModelAttributes(this.cubeShaderProgram, model);
+      this.sendModelUniforms(this.cubeShaderProgram, model, camera);
+      this.gl.drawElements(this.gl.TRIANGLES, model.indices.length, this.gl.UNSIGNED_SHORT, 0);
+    });
+  }
+
   private renderEnvironment(_camera?: Camera): void {
     let camera: Camera;
-
-    if (_camera) camera = _camera;
-    else camera = this.camera;
-
+    camera = _camera ? _camera : this.camera;
     if (this.skyBox) this.renderSkyBox(camera);
+    if (this.cubes) this.renderCubes(camera);
   }
 
   private renderReflectiveObject(): void {
@@ -338,13 +349,13 @@ export default class Scene {
     this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
 
     this.gl.useProgram(this.reflShaderProgram);
-    this.sendModelAttributes(model);
+    this.sendModelAttributes(this.reflShaderProgram, model);
     this.sendModelUniforms(this.reflShaderProgram, model, this.camera, true);
 
     this.gl.drawElements(this.gl.TRIANGLES, model.indices.length, this.gl.UNSIGNED_SHORT, 0);
   }
 
-  public render() {
+  public render(): void {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     this.renderEnvironment();
     this.renderReflectiveObject();

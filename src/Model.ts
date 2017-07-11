@@ -43,6 +43,15 @@ export default class Model {
     this.lambertianMaterialColor = opts && opts.lambertianMaterialColor ? opts.lambertianMaterialColor : vec3.fromValues(1, 1, 1);
     this.specularMaterialColor = opts && opts.specularMaterialColor ? opts.specularMaterialColor : vec3.fromValues(1, 1, 1);
     this.textureWeight = opts && opts.textureWeight ? opts.textureWeight : 1;
+
+    this.cubeTexture = {
+      top: null,
+      bottom: null,
+      left: null,
+      right: null,
+      front: null,
+      back: null,
+    };
   }
 
   public addCubeCamera(): void {
@@ -88,7 +97,7 @@ export default class Model {
     );
   }
 
-  public translate(dx: number|vec3, dy?: number, dz?: number): void {
+  public setPosition(dx: number|vec3, dy?: number, dz?: number): void {
     if (typeof dx === 'number') {
       this.position = vec3.add(vec3.create(), vec3.fromValues(dx, dy, dz), this.position);
     } else {
@@ -118,5 +127,11 @@ export default class Model {
     let invertedModelMat: mat4;
     invertedModelMat = mat4.invert(mat4.create(), this.modelMat());
     return mat4.transpose(mat4.create(), invertedModelMat);
+  }
+
+  public reset(): void {
+    this.position = vec3.fromValues(0, 0, 0);
+    this.scaleMatrix = mat4.create();
+    this.rotationMatrix = mat4.create();
   }
 }

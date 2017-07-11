@@ -32,12 +32,26 @@ function main(): void {
   skyBox.scale(100);
 
   reflectiveModel.addCubeCamera();
-  reflectiveModel.translate(0, -2, 0);
+  reflectiveModel.setPosition(0, -2, 0);
   reflectiveModel.rotate(-Math.PI / 2, vec3.fromValues(1, 0, 0));
-  reflectiveModel.scale(0.08);
+  reflectiveModel.scale(0.1);
 
   scene.addCamera(camera);
   scene.addReflectiveModel(reflectiveModel);
+  scene.addCubes([
+    new Cube({
+      ambientMaterialColor: vec3.fromValues(0.5, 0.3, 0.3),
+      lambertianMaterialColor: vec3.fromValues(1, 0.5, 0.5),
+    }),
+    new Cube({
+      ambientMaterialColor: vec3.fromValues(0.3, 0.5, 0.3),
+      lambertianMaterialColor: vec3.fromValues(0.5, 1, 0.5),
+    }),
+    new Cube({
+      ambientMaterialColor: vec3.fromValues(0.3, 0.3, 0.5),
+      lambertianMaterialColor: vec3.fromValues(0.5, 0.5, 1),
+    }),
+  ]);
   scene
     .loadShaders()
     .then(() => reflectiveModel.loadOBJFile('/teapot.obj'))
@@ -57,4 +71,4 @@ function main(): void {
     .catch(console.error);
 }
 
-main();  
+main();
