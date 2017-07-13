@@ -130,8 +130,7 @@ export default class Model {
   }
 
   public reset(): void {
-    this.position = vec3.fromValues(0, 0, 0);
-    this.scaleMatrix = mat4.create();
     this.rotationMatrix = mat4.create();
+    this.rotate(-Math.PI / 2, vec3.fromValues(1, 0, 0));
   }
 }

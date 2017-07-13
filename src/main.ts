@@ -43,7 +43,7 @@ function main(): void {
   let sideLength: number;
 
   sideLength = window.innerWidth >= 600 ? 500 : 250;
-  if (sideLength === 500 && isRetina()) sideLength = 1000;
+  if (sideLength === 500 && isRetina()) sideLength *= 2;
   canvas.width = sideLength;
   canvas.height = sideLength;
 

@@ -40,6 +40,18 @@ function initOrbitControls(camera: Camera): void {
     mouseX = event.clientX;
     mouseY = event.clientY;
   });
+
+  document.addEventListener('keydown', (event: any) => {
+    if (event.keyCode === 13) {
+      polarAngle = Math.PI / 2;
+      azimuthalAngle = Math.PI / 2;
+      camera.setEye(
+        6 * Math.cos(polarAngle) * Math.sin(azimuthalAngle),
+        6 * Math.cos(azimuthalAngle),
+        6 * Math.sin(polarAngle) * Math.sin(azimuthalAngle)
+      );
+    }
+  });
 }
 
 function initReflectiveModelControls(model: Model): () => void {
@@ -60,8 +72,12 @@ function initReflectiveModelControls(model: Model): () => void {
       case 38: // up
         model.rotate(-Math.PI / 18, vec3.fromValues(1, 0, 0));
         return;
-      case 40:
+      case 40: // down
         model.rotate(Math.PI / 18, vec3.fromValues(1, 0, 0));
+        return;
+      case 13: // enter
+        angularVelocity = 0;
+        model.reset();
       default:
         return;
     }
