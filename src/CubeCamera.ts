@@ -15,7 +15,7 @@ export default class CubeCamera {
     this.position = position;
     this.cameras = {
       top: new Camera(position, vec3.fromValues(0, 1, 0), vec3.fromValues(0, 0, 1)),
-      bottom: new Camera(position, vec3.fromValues(0, -1, 0), vec3.fromValues(1, 0, 0)),
+      bottom: new Camera(position, vec3.fromValues(0, -1, 0), vec3.fromValues(0, 0, 1)),
       left: new Camera(position, vec3.fromValues(-1, 0, 0), vec3.fromValues(0, -1, 0)),
       right: new Camera(position, vec3.fromValues(1, 0, 0), vec3.fromValues(0, -1, 0)),
       front: new Camera(position, vec3.fromValues(0, 0, 1), vec3.fromValues(0, -1, 0)),
