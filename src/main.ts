@@ -7,51 +7,85 @@ import {
   initOrbitControls,
   initReflectiveModelControls,
 } from './controls';
+import initCubeOrbits from './orbit';
 
 const canvas = <HTMLCanvasElement>document.getElementById('webgl-canvas');
-
-let sideLength: number;
-sideLength = window.innerWidth >= 500 ? 500 : 250;
-canvas.width = sideLength;
-canvas.height = sideLength;
-
 const skyBox = new Cube();
-const reflectiveModel = new Model({
-  textureWeight: 0.7,
-});
+const reflectiveModel = new Model({ textureWeight: 0.7 });
 const camera = new Camera();
-const scene = new Scene(canvas);
 
-function render(rotateTeapot: () => void): void {
+let scene: Scene;
+
+function isRetina(): boolean {
+  return (
+    (
+      window.matchMedia
+      && (
+        window.matchMedia('only screen and (min-resolution: 192dpi), only screen and (min-resolution: 2dppx), only screen and (min-resolution: 75.6dpcm)').matches
+        || window.matchMedia('only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 2/1), only screen and (min--moz-device-pixel-ratio: 2), only screen and (min-device-pixel-ratio: 2)').matches
+      )
+    )
+    || (
+      window.devicePixelRatio
+      && window.devicePixelRatio >= 2
+    )
+  ) && /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
+}
+
+function render(rotateTeapot: () => void, orbitCubes: () => void): void {
   rotateTeapot();
+  orbitCubes();
   scene.render();
-  window.requestAnimationFrame(render.bind(null, rotateTeapot));
+  window.requestAnimationFrame(render.bind(null, rotateTeapot, orbitCubes));
 }
 
 function main(): void {
-  skyBox.scale(100);
+  let sideLength: number;
+
+  sideLength = window.innerWidth >= 600 ? 500 : 250;
+  if (sideLength === 500 && isRetina()) sideLength = 1000;
+  canvas.width = sideLength;
+  canvas.height = sideLength;
+
+  scene = new Scene(canvas);
+
+  let cubes: Cube[] = [
+    new Cube({
+      ambientMaterialColor: vec3.fromValues(0.4, 0.2, 0.2),
+      lambertianMaterialColor: vec3.fromValues(1, 0.3, 0.3),
+    }),
+    new Cube({
+      ambientMaterialColor: vec3.fromValues(0.2, 0.4, 0.2),
+      lambertianMaterialColor: vec3.fromValues(0.3, 1, 0.3),
+    }),
+    new Cube({
+      ambientMaterialColor: vec3.fromValues(0.2, 0.2, 0.4),
+      lambertianMaterialColor: vec3.fromValues(0.3, 0.3, 1),
+    }),
+    new Cube({
+      ambientMaterialColor: vec3.fromValues(0.1, 0.4, 0.4),
+      lambertianMaterialColor: vec3.fromValues(0.15, 1, 1),
+    }),
+    new Cube({
+      ambientMaterialColor: vec3.fromValues(0.4, 0.1, 0.4),
+      lambertianMaterialColor: vec3.fromValues(1, 0.15, 1),
+    }),
+    new Cube({
+      ambientMaterialColor: vec3.fromValues(0.4, 0.4, 0.1),
+      lambertianMaterialColor: vec3.fromValues(1, 1, 0.15),
+    }),
+  ];
+
+  skyBox.scale(20);
 
   reflectiveModel.addCubeCamera();
   reflectiveModel.setPosition(0, -2, 0);
   reflectiveModel.rotate(-Math.PI / 2, vec3.fromValues(1, 0, 0));
-  reflectiveModel.scale(0.1);
+  reflectiveModel.scale(0.06);
 
   scene.addCamera(camera);
   scene.addReflectiveModel(reflectiveModel);
-  scene.addCubes([
-    new Cube({
-      ambientMaterialColor: vec3.fromValues(0.5, 0.3, 0.3),
-      lambertianMaterialColor: vec3.fromValues(1, 0.5, 0.5),
-    }),
-    new Cube({
-      ambientMaterialColor: vec3.fromValues(0.3, 0.5, 0.3),
-      lambertianMaterialColor: vec3.fromValues(0.5, 1, 0.5),
-    }),
-    new Cube({
-      ambientMaterialColor: vec3.fromValues(0.3, 0.3, 0.5),
-      lambertianMaterialColor: vec3.fromValues(0.5, 0.5, 1),
-    }),
-  ]);
+  scene.addCubes(cubes);
   scene
     .loadShaders()
     .then(() => reflectiveModel.loadOBJFile('/teapot.obj'))
@@ -66,7 +100,10 @@ function main(): void {
     .then(() => {
       initOrbitControls(camera);
       scene.addSkyBox(skyBox); // load texture before this
-      render(initReflectiveModelControls(reflectiveModel));
+      render(
+        initReflectiveModelControls(reflectiveModel),
+        initCubeOrbits(cubes)
+      );
     })
     .catch(console.error);
 }

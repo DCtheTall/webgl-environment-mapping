@@ -17,8 +17,8 @@ canvas {
   cursor: move;
   background: #000;
   margin: 0 auto;
-  height: 1000px;
-  width: 1000px;
+  height: 500px;
+  width: 500px;
 }
 
 @media (max-device-width: 500px) {

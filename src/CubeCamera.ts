@@ -15,12 +15,16 @@ export default class CubeCamera {
     this.position = position;
     this.cameras = {
       top: new Camera(position, vec3.fromValues(0, 1, 0), vec3.fromValues(0, 0, 1)),
-      bottom: new Camera(position, vec3.fromValues(0, -1, 0), vec3.fromValues(0, 0, -1)),
-      left: new Camera(position, vec3.fromValues(-1, 0, 0), vec3.fromValues(0, 1, 0)),
-      right: new Camera(position, vec3.fromValues(1, 0, 0), vec3.fromValues(0, 1, 0)),
-      front: new Camera(position, vec3.fromValues(0, 0, 1), vec3.fromValues(0, 1, 0)),
-      back: new Camera(position, vec3.fromValues(0, 0, -1), vec3.fromValues(0, 1, 0)),
+      bottom: new Camera(position, vec3.fromValues(0, -1, 0), vec3.fromValues(1, 0, 0)),
+      left: new Camera(position, vec3.fromValues(-1, 0, 0), vec3.fromValues(0, -1, 0)),
+      right: new Camera(position, vec3.fromValues(1, 0, 0), vec3.fromValues(0, -1, 0)),
+      front: new Camera(position, vec3.fromValues(0, 0, 1), vec3.fromValues(0, -1, 0)),
+      back: new Camera(position, vec3.fromValues(0, 0, -1), vec3.fromValues(0, -1, 0)),
     };
+    Object.keys(this.cameras).forEach((key: string) => {
+      this.cameras[key].setFOVY(Math.PI / 2);
+      this.cameras[key].setFar(21);
+    });
   }
 
   public translate(dx: number|vec3, dy?: number, dz?: number): void {

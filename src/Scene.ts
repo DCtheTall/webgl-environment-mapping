@@ -73,8 +73,8 @@ export default class Scene {
       back: <Framebuffer>this.gl.createFramebuffer(),
     };
     Object.keys(this.frameBuffers).forEach((key: string) => {
-      this.frameBuffers[key].width = 32;
-      this.frameBuffers[key].height = 32;
+      this.frameBuffers[key].width = 128;
+      this.frameBuffers[key].height = 128;
     });
     this.renderBuffers = {
       top: this.gl.createRenderbuffer(),
@@ -249,7 +249,7 @@ export default class Scene {
   private sendSkyboxUniforms(camera: Camera): void {
     this.sendMatrixUniforms(this.skyboxShaderProgram, [
       { name: 'u_ModelMat', matrix: this.skyBox.modelMat() },
-      { name: 'u_PerspectiveMat', matrix: camera.perspectiveMat },
+      { name: 'u_PerspectiveMat', matrix: camera.getPerspective() },
       { name: 'u_ViewMat', matrix: camera.getLookAt() },
     ]);
     this.sendSamplerUniform(this.skyboxShaderProgram);
@@ -265,7 +265,7 @@ export default class Scene {
     this.sendMatrixUniforms(shaderProgram, [
       { name: 'u_ModelMat', matrix: model.modelMat() },
       { name: 'u_NormalMat', matrix: model.normalMat() },
-      { name: 'u_PerspectiveMat', matrix: camera.perspectiveMat },
+      { name: 'u_PerspectiveMat', matrix: camera.getPerspective() },
       { name: 'u_ViewMat', matrix: camera.getLookAt() },
     ]);
 
@@ -291,15 +291,17 @@ export default class Scene {
 
   private renderSkyBox(camera: Camera): void {
     this.gl.useProgram(this.skyboxShaderProgram);
+    this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, this.skyboxTexture);
+
     this.sendSkyboxAttributes();
     this.sendSkyboxUniforms(camera);
-    this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, this.skyboxTexture);
 
     this.gl.drawElements(this.gl.TRIANGLES, this.skyBox.indices.length, this.gl.UNSIGNED_SHORT, 0);
   }
 
   private renderCubes(camera: Camera): void {
     this.gl.useProgram(this.cubeShaderProgram);
+
     this.cubes.forEach((model: Cube) => {
       this.sendModelAttributes(this.cubeShaderProgram, model);
       this.sendModelUniforms(this.cubeShaderProgram, model, camera);
@@ -340,15 +342,13 @@ export default class Scene {
       this.renderEnvironment(camera);
     });
 
-    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-
-    this.gl.generateMipmap(this.gl.TEXTURE_CUBE_MAP);
-
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
 
+    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+
     this.gl.useProgram(this.reflShaderProgram);
+    this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, this.reflectionTexture);
     this.sendModelAttributes(this.reflShaderProgram, model);
     this.sendModelUniforms(this.reflShaderProgram, model, this.camera, true);
 

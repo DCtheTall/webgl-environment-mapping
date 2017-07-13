@@ -32,6 +32,6 @@
     "pug": "^2.0.0-rc.2",
     "uglifyjs-webpack-plugin": "^0.4.3",
     "webgl-obj-loader": "^0.1.1",
-    "webpack": "^2.6.1"
+    "webpack": "^2.7.0"
   }
 }

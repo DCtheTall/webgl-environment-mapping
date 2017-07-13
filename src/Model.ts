@@ -97,11 +97,11 @@ export default class Model {
     );
   }
 
-  public setPosition(dx: number|vec3, dy?: number, dz?: number): void {
-    if (typeof dx === 'number') {
-      this.position = vec3.add(vec3.create(), vec3.fromValues(dx, dy, dz), this.position);
+  public setPosition(x: number|vec3, y?: number, z?: number): void {
+    if (typeof x === 'number') {
+      this.position = vec3.add(vec3.create(), vec3.fromValues(x, y, z), this.position);
     } else {
-      this.position = vec3.add(vec3.create(), dx, this.position);
+      this.position = x;
     }
   }
 

@@ -5,22 +5,19 @@ import {
 
 export default class Camera {
   private _ASPECT_RATIO: number = 1;
-  private _FOVY: number = Math.PI / 3;
-  private _NEAR: number = 1e-2;
-  private _FAR: number = 1e6;
+  private _NEAR: number = 1;
+
+  private FAR: number = 1e6;
+  private FOVY: number = Math.PI / 3;
 
   private eye: vec3;
   private at: vec3;
   private up: vec3;
 
-  public perspectiveMat: mat4;
-
   constructor(eye?: vec3, at?: vec3, up?: vec3) {
-    this.eye = eye || vec3.fromValues(0, 0, 10);
+    this.eye = eye || vec3.fromValues(0, 0, 6);
     this.at = at || vec3.fromValues(0, 0, 0);
     this.up = up || vec3.fromValues(0, 1, 0);
-
-    this.perspectiveMat = mat4.perspective(mat4.create(), this._ASPECT_RATIO, this._FOVY, this._NEAR, this._FAR);
   }
 
   public getEye(): vec3 {
@@ -39,6 +36,10 @@ export default class Camera {
     return mat4.lookAt(mat4.create(), this.eye, this.at, this.up);
   }
 
+  public getPerspective(): mat4 {
+    return mat4.perspective(mat4.create(), this.FOVY, this._ASPECT_RATIO, this._NEAR, this.FAR);
+  }
+
   public setEye(x: number|vec3, y?: number, z?: number): void {
     if (typeof x === 'number') this.eye = vec3.set(this.eye, x, y, z);
     else this.eye = x;
@@ -50,5 +51,13 @@ export default class Camera {
 
   public setUp(x: number, y: number, z: number): void {
     this.up = vec3.set(this.up, x, y, z);
+  }
+
+  public setFOVY(fovy: number) {
+    this.FOVY = fovy;
+  }
+
+  public setFar(far: number) {
+    this.FAR = far;
   }
 }

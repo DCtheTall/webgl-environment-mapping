@@ -32,9 +32,9 @@ function initOrbitControls(camera: Camera): void {
     azimuthalAngle -= dy / 100;
 
     camera.setEye(
-      10 * Math.cos(polarAngle) * Math.sin(azimuthalAngle),
-      10 * Math.cos(azimuthalAngle),
-      10 * Math.sin(polarAngle) * Math.sin(azimuthalAngle)
+      6 * Math.cos(polarAngle) * Math.sin(azimuthalAngle),
+      6 * Math.cos(azimuthalAngle),
+      6 * Math.sin(polarAngle) * Math.sin(azimuthalAngle)
     );
 
     mouseX = event.clientX;
