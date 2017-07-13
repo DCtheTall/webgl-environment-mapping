@@ -1,6 +1,9 @@
 ![Screenshot](https://dcthetall-environment-mapping.herokuapp.com/screenshot.png)
 # WebGL Environment Mapping
 ***
+### Live demo:
+https://dcthetall-environment-mapping.herokuapp.com/
+***
 An implementation of dynamic cube
 mapping to render realistic looking
 reflections in WebGL. This project runs
