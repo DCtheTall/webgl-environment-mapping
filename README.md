@@ -1,5 +1,5 @@
 ![Screenshot][screenshot]
-[screenshot]: public/screenshot.png
+[screenshot]: https://dcthetall-environment-mapping.herokuapp.com/public/screenshot.png
 # WebGL Environment Mapping
 ***
 An implementation of dynamic cube
