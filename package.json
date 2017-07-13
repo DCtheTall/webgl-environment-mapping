@@ -5,7 +5,8 @@
   "main": "bin/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node bin"
+    "start": "node bin",
+    "heroku-postbuild": "sh prod-build.sh"
   },
   "repository": {
     "type": "git",
@@ -33,6 +34,5 @@
     "uglifyjs-webpack-plugin": "^0.4.3",
     "webgl-obj-loader": "^0.1.1",
     "webpack": "^2.7.0"
-  },
-  "heroku-postbuild": "sh build.sh"
+  }
 }
