@@ -28,7 +28,7 @@ export default class Scene {
   private cubes: Cube[];
   private reflectiveModel: Model;
 
-  private glTextureCubeFaces: CubeFaces<number>;
+  private gltextureCubeMapFaces: CubeFaces<number>;
 
   private skyboxShaderProgram: WebGLProgram;
   private reflShaderProgram: WebGLProgram;
@@ -52,7 +52,7 @@ export default class Scene {
     this.gl.depthFunc(this.gl.LEQUAL);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-    this.glTextureCubeFaces = {
+    this.gltextureCubeMapFaces = {
       left: this.gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
       right: this.gl.TEXTURE_CUBE_MAP_POSITIVE_X,
       bottom: this.gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
@@ -100,8 +100,8 @@ export default class Scene {
     this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
     this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
-    Object.keys(this.glTextureCubeFaces).forEach((key: string) => {
-      this.gl.texImage2D(this.glTextureCubeFaces[key], 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.skyBox.cubeTexture[key]);
+    Object.keys(this.gltextureCubeMapFaces).forEach((key: string) => {
+      this.gl.texImage2D(this.gltextureCubeMapFaces[key], 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.skyBox.cubeTexture[key]);
     });
 
     this.gl.generateMipmap(this.gl.TEXTURE_CUBE_MAP);
@@ -123,10 +123,10 @@ export default class Scene {
     this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
     this.gl.texParameteri(this.gl.TEXTURE_CUBE_MAP, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
-    Object.keys(this.glTextureCubeFaces).forEach((key: string) => {
+    Object.keys(this.gltextureCubeMapFaces).forEach((key: string) => {
       let frameBuffer: Framebuffer;
       frameBuffer = this.frameBuffers[key];
-      this.gl.texImage2D(this.glTextureCubeFaces[key], 0, this.gl.RGBA, frameBuffer.width, frameBuffer.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+      this.gl.texImage2D(this.gltextureCubeMapFaces[key], 0, this.gl.RGBA, frameBuffer.width, frameBuffer.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
     });
   }
 
@@ -333,7 +333,7 @@ export default class Scene {
       this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, frameBuffer);
       this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderBuffer);
       this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, frameBuffer.width, frameBuffer.height);
-      this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.glTextureCubeFaces[key], this.reflectionTexture, 0);
+      this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gltextureCubeMapFaces[key], this.reflectionTexture, 0);
       this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, renderBuffer);
 
       this.gl.viewport(0, 0, frameBuffer.width, frameBuffer.height);

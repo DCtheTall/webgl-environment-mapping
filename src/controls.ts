@@ -62,6 +62,7 @@ function initReflectiveModelControls(model: Model): () => void {
   dTheta = Math.PI / 480;
 
   document.addEventListener('keydown', (event: any) => {
+    event.preventDefault();
     switch (event.keyCode) {
       case 37: // left
         angularVelocity -= dTheta;
