@@ -4,6 +4,9 @@
   "description": "Dynamic reflections in WebGL using cube mapping",
   "main": "bin/index.js",
   "scripts": {
+    "build": "webpack --mode production",
+    "dev": "webpack --mode development --progress --watch",
+    "start": "NODE_ENV=development node bin",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
