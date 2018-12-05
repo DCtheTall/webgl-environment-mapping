@@ -26,10 +26,10 @@ export default class Model {
   public textureUVs: Float32Array;
   public indices: Uint16Array;
 
-  public ambientMaterialColor: vec3;
-  public lambertianMaterialColor: vec3;
-  public specularMaterialColor: vec3;
-  public textureWeight: number;
+  public readonly ambientMaterialColor: vec3;
+  public readonly lambertianMaterialColor: vec3;
+  public readonly specularMaterialColor: vec3;
+  public readonly textureWeight: number;
 
   public cubeCamera: CubeCamera;
   public cubeTexture: CubeFaces<any>;
