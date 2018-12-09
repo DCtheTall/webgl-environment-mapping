@@ -156,7 +156,7 @@ export default class Model {
     }
   }
 
-  public reset(): void {
+  public reset() {
     this.rotationMatrix = mat4.create();
     this.rotate(-Math.PI / 2, vec3.fromValues(1, 0, 0));
   }
