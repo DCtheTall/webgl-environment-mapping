@@ -7,6 +7,7 @@ import Scene from './lib/Scene';
 import RenderFrame from './lib/RenderFrame';
 import Shader from './lib/Shader';
 import CubeModel from './lib/CubeModel';
+import { initOrbitControls } from './lib/controls';
 
 
 (async function main() {
@@ -72,11 +73,17 @@ import CubeModel from './lib/CubeModel';
   }));
 
   scene.render({
+    animate: true,
     draw({ firstRender }) {
       // render sky box
+      const skybox = scene.getRenderFrame('skybox');
+      skybox.shader.setUniformData('uPerspectiveMat', camera.perspectiveMat);
+      skybox.shader.setUniformData('uViewMat', camera.lookAtMat);
       scene.gl.activeTexture(scene.gl.TEXTURE0);
       scene.gl.bindTexture(scene.gl.TEXTURE_CUBE_MAP, scene.getTexture('skybox'));
-      scene.getRenderFrame('skybox').render(firstRender);
+      skybox.render(firstRender);
     },
   });
+
+  initOrbitControls(camera);
 })();

@@ -1,3 +1,6 @@
+import { mat4 } from 'gl-matrix';
+
+
 enum ShaderProgramTypes {
   BOOL,
   FLOAT,
@@ -213,7 +216,7 @@ export default class Shader {
     this.attributes[attrbuteName].data = data;
   }
 
-  public setUniformData(uniformName: string, data: number | number[]) {
+  public setUniformData(uniformName: string, data: number | number[] | mat4) {
     this.uniforms[uniformName].data = data;
   }
 
