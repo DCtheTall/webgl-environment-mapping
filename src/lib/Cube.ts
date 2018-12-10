@@ -70,7 +70,11 @@ export const CUBE_VERTICES = new Float32Array([
 
 
 export interface CubeFaces<T> {
+  [index: string]: T;
   'x+': T; 'x-': T;
   'y+': T; 'y-': T;
   'z+': T; 'z-': T;
 }
+
+export type CubeTexture =
+  CubeFaces<HTMLImageElement|HTMLCanvasElement>;

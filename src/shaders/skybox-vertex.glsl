@@ -1,5 +1,6 @@
 precision mediump float;
 
+
 attribute vec3 a_Position;
 
 uniform mat4 u_ModelMat;
@@ -7,6 +8,7 @@ uniform mat4 u_PerspectiveMat;
 uniform mat4 u_ViewMat;
 
 varying vec3 v_TexDirection;
+
 
 void main() {
   v_TexDirection = a_Position;

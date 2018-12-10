@@ -10,6 +10,8 @@ interface RenderFrameConstructorParams {
   renderToTexture?: boolean;
   useRenderBuffer?: boolean;
   clearBeforeRender?: boolean;
+  mode?: number;
+  drawElements?: boolean;
 }
 
 export default class RenderFrame {
@@ -22,6 +24,8 @@ export default class RenderFrame {
   private width: number;
   private nVertices: number;
   private clearBeforeRender: boolean;
+  private mode: number;
+  private drawElements: boolean;
 
   public shader: Shader;
   public texture: WebGLTexture;
@@ -32,9 +36,11 @@ export default class RenderFrame {
     width,
     height,
     nVertices,
+    mode = gl.TRIANGLE_STRIP,
     renderToTexture = false,
     useRenderBuffer = false,
     clearBeforeRender = true,
+    drawElements = false,
   }: RenderFrameConstructorParams) {
     this.renderToTexture = renderToTexture;
     this.useRenderBuffer = useRenderBuffer;
@@ -46,6 +52,8 @@ export default class RenderFrame {
     this.frameBuffer = renderToTexture ?
       this.gl.createFramebuffer() : null;
     this.clearBeforeRender = clearBeforeRender;
+    this.mode = mode;
+    this.drawElements = drawElements;
     this.initTexture();
     this.initRenderBuffer();
   }
@@ -121,8 +129,11 @@ export default class RenderFrame {
     this.gl.viewport(0, 0, this.width, this.height);
     this.shader.sendAttributes(firstRender);
     this.shader.sendUniforms();
-    this.gl.drawArrays(
-      this.gl.TRIANGLE_STRIP, 0, this.nVertices);
+    if (this.drawElements) {
+      this.gl.drawElements(this.mode, this.nVertices, this.gl.UNSIGNED_SHORT, 0);
+    } else {
+      this.gl.drawArrays(this.mode, 0, this.nVertices);
+    }
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
   }

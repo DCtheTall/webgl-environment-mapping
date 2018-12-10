@@ -3,17 +3,14 @@ import {
   mat4,
 } from 'gl-matrix';
 import axios from 'axios';
-import * as OBJ from 'webgl-obj-loader';
+import { Mesh } from 'webgl-obj-loader';
 
-import { CubeFaces } from './Cube';
-
-
-const DEFAULT_AMBIENT_COLOR = vec3.fromValues(0.3, 0.3, 0.3);
-const DEFAULT_TEXTURE_WEIGHT = 1;
-const WHITE = vec3.fromValues(1, 1, 1);
-
-
-type AnyFunc = (...args: any[]) => any;
+import {
+  DEFAULT_POSITION,
+  DEFAULT_AMBIENT_COLOR,
+  DEFAULT_TEXTURE_WEIGHT,
+  WHITE,
+} from './constants';
 
 
 export interface ModelOptions {
@@ -26,11 +23,9 @@ export interface ModelOptions {
 
 export default class Model {
   private position: vec3;
-
   private scaleMatrix: mat4;
   private rotationMatrix: mat4;
 
-  protected _cubeTexture: CubeFaces<HTMLImageElement>;
   protected _indices: Uint16Array;
   protected _normals: Float32Array;
   protected _texUVs: Float32Array;
@@ -42,27 +37,17 @@ export default class Model {
   public readonly textureWeight: number;
 
   constructor(opts?: ModelOptions) {
-    this._cubeTexture = {
-      'x+': null, 'x-': null,
-      'y+': null, 'y-': null,
-      'z+': null, 'z-': null,
-    };
+    this.position = DEFAULT_POSITION;
+    this.scaleMatrix = mat4.create();
+    this.rotationMatrix = mat4.create();
     this.ambientMaterialColor =
-      (opts &&
-        opts.ambientMaterialColor) || DEFAULT_AMBIENT_COLOR;
+      (opts && opts.ambientMaterialColor) || DEFAULT_AMBIENT_COLOR;
     this.lambertianMaterialColor =
-      (opts &&
-        opts.lambertianMaterialColor) || WHITE;
+      (opts && opts.lambertianMaterialColor) || WHITE;
     this.specularMaterialColor =
-      (opts &&
-        opts.specularMaterialColor) || WHITE;
+      (opts && opts.specularMaterialColor) || WHITE;
     this.textureWeight =
-      (opts
-        && opts.textureWeight) || DEFAULT_TEXTURE_WEIGHT;
-  }
-
-  get cubeTexture(): CubeFaces<HTMLImageElement> {
-    return this._cubeTexture;
+      (opts && opts.textureWeight) || DEFAULT_TEXTURE_WEIGHT;
   }
 
   get indices(): Uint16Array {
@@ -105,25 +90,15 @@ export default class Model {
     return this._vertices;
   }
 
-  public async loadCubeTexture(cubeTextureUrls: CubeFaces<string>) {
-    await Promise.all(
-      Object.keys(cubeTextureUrls).map(
-        key => new Promise((resolve: AnyFunc) => {
-          const img = this._cubeTexture[key] = new Image();
-
-          img.src = cubeTextureUrls[key];
-          img.onload = resolve;
-        })));
-  }
-
   public async loadObjFile(url: string) {
     try {
       const { data } = await axios.get(url);
-      const mesh = new OBJ.Mesh(data);
+      const mesh = new Mesh(data);
       const maxTextureVal = Math.max.apply(null, ...mesh.textures, 1);
 
       this._vertices = new Float32Array(mesh.vertices);
-      this._normals = new Float32Array(mesh.textures.map((val: number) => val / maxTextureVal));
+      this._normals = new Float32Array(mesh.vertexNormals);
+      this._texUVs = new Float32Array(mesh.textures.map((val: number) => val / maxTextureVal));
       this._indices = new Uint16Array(mesh.indices);
     } catch (err) {
       console.error(err);
@@ -144,7 +119,7 @@ export default class Model {
       s, 0, 0, 0,
       0, s, 0, 0,
       0, 0, s, 0,
-      0, 0, 0, 1
+      0, 0, 0, 1,
     );
   }
 

@@ -17,6 +17,8 @@ interface ShaderData {
 
 export interface ShaderAttribute extends ShaderData {
   location?: number;
+  indices?: Uint16Array;
+  indicesBuffer?: WebGLBuffer;
 }
 
 export interface ShaderUniform extends ShaderData {
@@ -100,6 +102,9 @@ export default class Shader {
       const attribute = this.attributes[key];
       const { locationName } = attribute;
       attribute.buffer = this.gl.createBuffer();
+      if (attribute.indices) {
+        attribute.indicesBuffer = this.gl.createBuffer();
+      }
       attribute.location = this.gl.getAttribLocation(this.program, locationName);
     });
     Object.keys(this.uniforms).forEach((key: string) => {
@@ -116,7 +121,12 @@ export default class Shader {
       firstRender = true,
     } = {},
   ): void {
-    const { data, buffer, location } = attribute;
+    const {
+      data,
+      buffer,
+      indicesBuffer,
+      location,
+    } = attribute;
     if (typeof data === 'number')
       throw new Error('You must use number[] type for data for vector attribute.');
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
@@ -126,16 +136,27 @@ export default class Shader {
     if (firstRender) {
       this.gl.bufferData(
         this.gl.ARRAY_BUFFER, new Float32Array(<number[]>data), this.gl.STATIC_DRAW);
+      if (attribute.indices) {
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
+        this.gl.bufferData(
+          this.gl.ELEMENT_ARRAY_BUFFER, attribute.indices, this.gl.DYNAMIC_DRAW)
+      }
     }
   }
 
   public sendAttributes(firstRender: boolean) {
     Object.keys(this.attributes).forEach((key: string) => {
       const attribute = this.attributes[key];
+
       switch (attribute.type) {
         case ShaderProgramTypes.VECTOR2:
           this.sendVectorAttribute(2, attribute, { firstRender });
           break;
+
+        case ShaderProgramTypes.VECTOR3:
+          this.sendVectorAttribute(3, attribute, { firstRender });
+          break;
+
         default:
           throw new Error(`Invalid type provided for attribute ${key} provided.`);
       }
@@ -145,6 +166,7 @@ export default class Shader {
   public sendUniforms() {
     Object.keys(this.uniforms).forEach((key: string) => {
       const uniform = this.uniforms[key];
+
       switch (uniform.type) {
         case ShaderProgramTypes.BOOL:
           this.gl.uniform1i(

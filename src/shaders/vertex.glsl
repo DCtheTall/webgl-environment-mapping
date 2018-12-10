@@ -1,5 +1,6 @@
 precision mediump float;
 
+
 attribute vec3 a_Position;
 attribute vec3 a_Normal;
 
@@ -10,6 +11,7 @@ uniform mat4 u_ViewMat;
 
 varying vec3 v_Position;
 varying vec3 v_Normal;
+
 
 void main() {
   vec4 transformedPosition;
