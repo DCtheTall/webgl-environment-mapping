@@ -212,11 +212,11 @@ export default class Shader {
     });
   }
 
-  public setAttributeData(attrbuteName: string, data: number | number[]) {
+  public setAttributeData(attrbuteName: string, data: number | number[] | Float32Array) {
     this.attributes[attrbuteName].data = data;
   }
 
-  public setUniformData(uniformName: string, data: number | number[] | mat4) {
+  public setUniformData(uniformName: string, data: number | number[] | mat4 | Float32Array) {
     this.uniforms[uniformName].data = data;
   }
 

@@ -28,7 +28,7 @@ export default class Model {
 
   protected _indices: Uint16Array;
   protected _normals: Float32Array;
-  protected _texUVs: Float32Array;
+  protected _texCoords: Float32Array;
   protected _vertices: Float32Array;
 
   public readonly ambientMaterialColor: vec3;
@@ -73,8 +73,8 @@ export default class Model {
     return this._normals;
   }
 
-  get texUVs(): Float32Array {
-    return this._texUVs;
+  get textureCoords(): Float32Array {
+    return this._texCoords;
   }
 
   get translationMatrix(): mat4 {
@@ -91,18 +91,14 @@ export default class Model {
   }
 
   public async loadObjFile(url: string) {
-    try {
-      const { data } = await axios.get(url);
-      const mesh = new Mesh(data);
-      const maxTextureVal = Math.max.apply(null, ...mesh.textures, 1);
+    const { data } = await axios.get(url);
+    const mesh = new Mesh(data);
+    const maxTextureVal = Math.max.apply(null, ...mesh.textures, 1);
 
-      this._vertices = new Float32Array(mesh.vertices);
-      this._normals = new Float32Array(mesh.vertexNormals);
-      this._texUVs = new Float32Array(mesh.textures.map((val: number) => val / maxTextureVal));
-      this._indices = new Uint16Array(mesh.indices);
-    } catch (err) {
-      console.error(err);
-    }
+    this._vertices = new Float32Array(mesh.vertices);
+    this._normals = new Float32Array(mesh.vertexNormals);
+    this._texCoords = new Float32Array(mesh.textures.map((val: number) => val / maxTextureVal));
+    this._indices = new Uint16Array(mesh.indices);
   }
 
   public rotate(rad: number, axis: vec3) {

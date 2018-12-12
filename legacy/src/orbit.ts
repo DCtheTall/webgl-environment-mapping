@@ -35,7 +35,10 @@ function initCubeOrbits(cubes: Cube[]): () => void {
     let randomVec: vec3;
     let projectedVec: vec3;
     radialVec = vec3.normalize(vec3.create(), v);
-    randomVec = vec3.normalize(vec3.create(), vec3.fromValues(Math.random(), Math.random(), Math.random()));
+    randomVec = vec3.normalize(
+      vec3.create(),
+      vec3.fromValues(
+        Math.random(), Math.random(), Math.random()));
     projectedVec = vec3.scale(vec3.create(), randomVec, vec3.dot(radialVec, randomVec));
     return vec3.normalize(projectedVec, projectedVec);
   });

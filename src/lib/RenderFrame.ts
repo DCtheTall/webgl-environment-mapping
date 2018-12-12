@@ -1,6 +1,7 @@
 import { CLEAR_COLOR } from './constants';
 import Shader from './Shader';
 
+
 interface RenderFrameConstructorParams {
   gl: WebGLRenderingContext;
   shader: Shader;
@@ -14,7 +15,8 @@ interface RenderFrameConstructorParams {
   drawElements?: boolean;
 }
 
-export default class RenderFrame {
+
+export default class Frame {
   private renderToTexture: boolean;
   private useRenderBuffer: boolean;
   private gl: WebGLRenderingContext;

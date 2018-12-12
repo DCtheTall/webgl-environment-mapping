@@ -22,6 +22,8 @@ export const DEFAULT_UP = vec3.fromValues(0, 1, 0);
 
 export const SKYBOX_FRAGMENT_SHADER =
   <string>require('../shaders/skybox-fragment.glsl');
-
 export const SKYBOX_VERTEX_SHADER =
   <string>require('../shaders/skybox-vertex.glsl');
+export const VERTEX_SHADER = require('../shaders/vertex.glsl');
+export const CUBES_FRAGMENT_SHADER = require('../shaders/cube-fragment.glsl');
+
