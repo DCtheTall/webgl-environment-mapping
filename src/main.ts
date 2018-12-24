@@ -11,10 +11,10 @@ import {
   CUBES_FRAGMENT_SHADER,
 } from './lib/constants';
 import Camera from './lib/Camera';
-import Scene from './lib/Scene';
-import RenderFrame from './lib/RenderFrame';
-import Shader from './lib/Shader';
 import CubeModel from './lib/CubeModel';
+import Frame from './lib/Frame';
+import Scene from './lib/Scene';
+import Shader from './lib/Shader';
 
 
 function initOrbitControls(camera: Camera) {
@@ -113,7 +113,7 @@ function initCubeOrbits(cubes: CubeModel[]): () => void {
 }
 
 
-function updateFrameView(frame: RenderFrame, camera: Camera) {
+function updateFrameView(frame: Frame, camera: Camera) {
   frame.shader.setUniformData('uPerspectiveMat', camera.perspectiveMat);
   frame.shader.setUniformData('uViewMat', camera.lookAtMat);
 }
@@ -165,7 +165,7 @@ function updateFrameView(frame: RenderFrame, camera: Camera) {
   const skybox = new CubeModel();
   skybox.scale(20);
 
-  scene.setRenderFrame('skybox', new RenderFrame({
+  scene.setFrame('skybox', new Frame({
     gl: scene.gl,
     width: canvas.width,
     height: canvas.height,
@@ -207,7 +207,7 @@ function updateFrameView(frame: RenderFrame, camera: Camera) {
     }),
   }));
 
-  scene.setRenderFrame('cubes', new RenderFrame({ // replace with "frame"
+  scene.setFrame('cubes', new Frame({ // replace with "frame"
     gl: scene.gl, // these can be added on construction
     width: canvas.width,
     height: canvas.height,
@@ -273,8 +273,9 @@ function updateFrameView(frame: RenderFrame, camera: Camera) {
       const skyboxFrame = scene.getRenderFrame('skybox');
       updateFrameView(skyboxFrame, camera);
       scene.gl.activeTexture(scene.gl.TEXTURE0);
-      scene.gl.bindTexture(scene.gl.TEXTURE_CUBE_MAP, scene.getTexture('skybox'));
-      skyboxFrame.render(firstRender);
+      scene.gl.bindTexture(
+          scene.gl.TEXTURE_CUBE_MAP, scene.getTexture('skybox'));
+      skyboxFrame.renderToCanvas(firstRender);
 
       // render cubes
       const cubeFrame = scene.getRenderFrame('cubes');
@@ -287,12 +288,12 @@ function updateFrameView(frame: RenderFrame, camera: Camera) {
         cubeFrame.shader.setUniformData('uModelMat', cube.modelMat);
         cubeFrame.shader.setUniformData('uNormalMat', cube.normalMat);
         cubeFrame.shader.setUniformData(
-          'uAmbientMaterialColor', cube.ambientMaterialColor);
+            'uAmbientMaterialColor', cube.ambientMaterialColor);
         cubeFrame.shader.setUniformData(
-          'uLambertianMaterialColor', cube.lambertianMaterialColor);
+            'uLambertianMaterialColor', cube.lambertianMaterialColor);
         cubeFrame.shader.setUniformData(
-          'uSpecularMaterialColor', cube.specularMaterialColor);
-        cubeFrame.render(firstRender);
+            'uSpecularMaterialColor', cube.specularMaterialColor);
+        cubeFrame.renderToTexture(firstRender);
       });
     },
   });

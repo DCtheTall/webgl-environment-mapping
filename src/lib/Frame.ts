@@ -17,8 +17,6 @@ interface RenderFrameConstructorParams {
 
 
 export default class Frame {
-  private renderToTexture: boolean;
-  private useRenderBuffer: boolean;
   private gl: WebGLRenderingContext;
   private frameBuffer: WebGLFramebuffer;
   private renderBuffer: WebGLRenderbuffer;
@@ -31,6 +29,8 @@ export default class Frame {
 
   public shader: Shader;
   public texture: WebGLTexture;
+  public renderToCanvas: (firstRender?: boolean) => void;
+  public renderToTexture: (firstRender?: boolean) => void;
 
   constructor({
     gl,
@@ -39,32 +39,26 @@ export default class Frame {
     height,
     nVertices,
     mode = gl.TRIANGLE_STRIP,
-    renderToTexture = false,
-    useRenderBuffer = false,
     clearBeforeRender = true,
     drawElements = false,
   }: RenderFrameConstructorParams) {
-    this.renderToTexture = renderToTexture;
-    this.useRenderBuffer = useRenderBuffer;
     this.gl = gl;
     this.shader = shader;
     this.width = width;
     this.height = height;
     this.nVertices = nVertices;
-    this.frameBuffer = renderToTexture ?
-      this.gl.createFramebuffer() : null;
+    this.frameBuffer = this.gl.createFramebuffer();
     this.clearBeforeRender = clearBeforeRender;
     this.mode = mode;
     this.drawElements = drawElements;
     this.initTexture();
     this.initRenderBuffer();
+    this.renderToCanvas = this.render.bind(this, null, null);
+    this.renderToTexture = this.render.bind(
+        this, this.frameBuffer, this.renderBuffer);
   }
 
   private initRenderBuffer() {
-    if (!this.useRenderBuffer) {
-      this.renderBuffer = null;
-      return;
-    }
     this.renderBuffer = this.gl.createRenderbuffer();
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.frameBuffer);
     this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.renderBuffer);
@@ -85,10 +79,6 @@ export default class Frame {
   }
 
   private initTexture() {
-    if (!this.renderToTexture) {
-      this.texture = null;
-      return;
-    }
     this.texture = this.gl.createTexture();
     this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.frameBuffer);
@@ -104,11 +94,11 @@ export default class Frame {
       null,
     );
     this.gl.texParameteri(
-      this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+        this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
     this.gl.texParameteri(
-      this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
     this.gl.texParameteri(
-      this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
     this.gl.framebufferTexture2D(
       this.gl.FRAMEBUFFER,
       this.gl.COLOR_ATTACHMENT0,
@@ -120,10 +110,14 @@ export default class Frame {
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
   }
 
-  public render(firstRender = true) {
+  private render(
+    frameBuffer: WebGLFramebuffer,
+    renderBuffer: WebGLRenderbuffer,
+    firstRender = true,
+  ) {
     this.shader.useProgram();
-    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.frameBuffer);
-    this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.renderBuffer);
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, frameBuffer);
+    this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderBuffer);
     if (this.clearBeforeRender) {
       this.gl.clearColor.apply(this.gl, CLEAR_COLOR);
       this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
@@ -132,7 +126,8 @@ export default class Frame {
     this.shader.sendAttributes(firstRender);
     this.shader.sendUniforms();
     if (this.drawElements) {
-      this.gl.drawElements(this.mode, this.nVertices, this.gl.UNSIGNED_SHORT, 0);
+      this.gl.drawElements(
+          this.mode, this.nVertices, this.gl.UNSIGNED_SHORT, 0);
     } else {
       this.gl.drawArrays(this.mode, 0, this.nVertices);
     }

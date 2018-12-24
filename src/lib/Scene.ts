@@ -1,5 +1,5 @@
 import { FRAME_RATE } from './constants';
-import RenderFrame from './RenderFrame';
+import Frame from './Frame';
 import { CubeTexture, CubeFaces } from './Cube';
 
 
@@ -16,7 +16,7 @@ export default class Scene {
   private firstRender: number;
   private rendering: boolean;
 
-  private renderFrames: { [index: string]: RenderFrame };
+  private frames: { [index: string]: Frame };
   private textures: { [index: string]: WebGLTexture };
   private glTexCubeFaces: CubeFaces<number>;
 
@@ -36,7 +36,7 @@ export default class Scene {
       || canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
     this.gl.enable(this.gl.DEPTH_TEST);
     this.gl.depthFunc(this.gl.LEQUAL);
-    this.renderFrames = {};
+    this.frames = {};
     this.textures = {};
     this.glTexCubeFaces = {
       'x+': this.gl.TEXTURE_CUBE_MAP_POSITIVE_X,
@@ -52,8 +52,8 @@ export default class Scene {
     return this.textures[key];
   }
 
-  public getRenderFrame(key: string): RenderFrame {
-    return this.renderFrames[key];
+  public getRenderFrame(key: string): Frame {
+    return this.frames[key];
   }
 
   public getTimeSinceFirstRender(animate: boolean): number {
@@ -120,12 +120,12 @@ export default class Scene {
     this.textures[key] = texture;
   }
 
-  public setRenderFrame(
+  public setFrame(
     key: string,
-    renderFrame: RenderFrame | ((gl: WebGLRenderingContext) => RenderFrame),
+    renderFrame: Frame | ((gl: WebGLRenderingContext) => Frame),
   ) {
-    if (typeof renderFrame === 'function') this.renderFrames[key] = renderFrame(this.gl);
-    else this.renderFrames[key] = renderFrame;
+    if (typeof renderFrame === 'function') this.frames[key] = renderFrame(this.gl);
+    else this.frames[key] = renderFrame;
   }
 
   public toggleAnimation() {
