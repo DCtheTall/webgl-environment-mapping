@@ -1,7 +1,10 @@
-import { mat4, vec3, vec4 } from 'gl-matrix';
+import { vec3 } from 'gl-matrix';
 
 import Camera from './Camera';
 import { CubeFaces } from './Cube';
+
+
+const CUBE_CAMERA_TEXTURE_WIDTH = 512;
 
 
 export default class CubeCamera {
@@ -23,17 +26,17 @@ export default class CubeCamera {
     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     this.cameras = {
       'x+': new Camera(
-          position, vec3.fromValues(1, 0, 0), vec3.fromValues(0, 1, 0)),
+          vec3.fromValues(0, 0, 0), vec3.fromValues(1, 0, 0), vec3.fromValues(0, -1, 0)),
       'x-': new Camera(
-          position, vec3.fromValues(-1, 0, 0), vec3.fromValues(0, 1, 0)),
+          vec3.fromValues(0, 0, 0), vec3.fromValues(-1, 0, 0), vec3.fromValues(0, -1, 0)),
       'y+': new Camera(
-          position, vec3.fromValues(0, 1, 0), vec3.fromValues(0, 1, 0)),
+          vec3.fromValues(0, 0, 0), vec3.fromValues(0, 1, 0), vec3.fromValues(0, 0, 1)),
       'y-': new Camera(
-          position, vec3.fromValues(0, -1, 0), vec3.fromValues(0, 1, 0)),
+          vec3.fromValues(0, 0, 0), vec3.fromValues(0, -1, 0), vec3.fromValues(0, 0, -1)),
       'z+': new Camera(
-          position, vec3.fromValues(0, 0, 1), vec3.fromValues(0, 1, 0)),
+          vec3.fromValues(0, 0, 0), vec3.fromValues(0, 0, 1), vec3.fromValues(0, -1, 0)),
       'z-': new Camera(
-          position, vec3.fromValues(1, 0, -1), vec3.fromValues(0, 1, 0)),
+          vec3.fromValues(0, 0, 0), vec3.fromValues(1, 0, -1), vec3.fromValues(0, -1, 0)),
     };
     this.frameBuffers = {
       'x+': gl.createFramebuffer(),
@@ -60,21 +63,23 @@ export default class CubeCamera {
       'z+': gl.createRenderbuffer(),
       'z-': gl.createRenderbuffer(),
     };
-    Object.keys(this.cameras).forEach((key: string) => {
+   for (const key of Object.keys(this.cameras)) {
       this.cameras[key].fov = Math.PI / 2;
-      this.cameras[key].farPlane = 21;
+      this.cameras[key].farPlane = 40;
       this.gl.texImage2D(
         this.glCubeFaces[key],
         0,
         this.gl.RGBA,
-        128,
-        128,
+        CUBE_CAMERA_TEXTURE_WIDTH,
+        CUBE_CAMERA_TEXTURE_WIDTH,
         0,
         this.gl.RGBA,
         this.gl.UNSIGNED_BYTE,
         null,
       );
-    });
+    }
+    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
   }
 
   get texture(): WebGLTexture {
@@ -95,12 +100,14 @@ export default class CubeCamera {
       this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, fBuffer);
       this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, rBuffer);
       this.gl.renderbufferStorage(
-          this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, 128, 128);
+          this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16,
+          CUBE_CAMERA_TEXTURE_WIDTH, CUBE_CAMERA_TEXTURE_WIDTH);
       this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER,
-        this.gl.COLOR_ATTACHMENT0, this.glCubeFaces[key], this._texture, 0);
+          this.gl.COLOR_ATTACHMENT0, this.glCubeFaces[key], this._texture, 0);
       this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER,
           this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, rBuffer);
-      this.gl.viewport(0, 0, 128, 128);
+      this.gl.viewport(0, 0,
+          CUBE_CAMERA_TEXTURE_WIDTH, CUBE_CAMERA_TEXTURE_WIDTH);
       this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
       callback(fBuffer, rBuffer, this.cameras[key]);
     }
@@ -114,7 +121,8 @@ export default class CubeCamera {
       this.position = vec3.add(vec3.create(), dx, this.position);
     }
 
-    Object.keys(this.cameras).forEach(
-        (key: string) => this.cameras[key].setEye(this.position));
+    for (const key of Object.keys(this.cameras)) {
+      this.cameras[key].setEye(this.position);
+    }
   }
 }

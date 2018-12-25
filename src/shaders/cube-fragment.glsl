@@ -1,4 +1,4 @@
-precision lowp float;
+precision mediump float;
 
 uniform vec3 u_AmbientMaterialColor;
 uniform vec3 u_LambertianMaterialColor;

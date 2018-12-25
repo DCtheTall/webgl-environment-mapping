@@ -188,7 +188,7 @@ function drawCubes(
   const scene = new Scene(canvas);
   const teapot = new Model({ textureWeight: .7 });
 
-  teapot.setPosition(0, -2, 0);
+  // teapot.setPosition(0, -2, 0);
   teapot.scale(0.06);
   teapot.rotate(-Math.PI / 2, vec3.fromValues(1, 0, 0));
   await teapot.loadObjFile('/teapot.obj');
@@ -412,34 +412,34 @@ function drawCubes(
 
   scene.render({
     animate: true,
-    draw({ firstRender }) {
+    draw() {
       iterateCubeOrbits();
       drawSkyBox(
           scene, camera,
-          (skybox: Frame) => skybox.renderToCanvas(firstRender));
+          (skybox: Frame) => skybox.renderToCanvas());
       drawCubes(
           scene, camera, cubes,
-          (cFrame: Frame) => cFrame.renderToCanvas(firstRender));
+          (cFrame: Frame) => cFrame.renderToCanvas());
 
       cubeCamera.renderTexture(
           (fBuffer: WebGLFramebuffer, rBuffer: WebGLRenderbuffer, cam: Camera) => {
             drawSkyBox(
                 scene, cam,
                 (skybox: Frame) =>
-                    skybox.render(fBuffer, rBuffer, false));
+                    skybox.render(fBuffer, rBuffer));
             drawCubes(
                 scene, cam, cubes,
-                (cFrame: Frame) => cFrame.render(fBuffer, rBuffer, false));
+                (cFrame: Frame) => cFrame.render(fBuffer, rBuffer));
           });
 
-      // const tpFrame = scene.getFrame('teapot');
-      // scene.gl.bindTexture(
-      //     scene.gl.TEXTURE_CUBE_MAP, cubeCamera.texture);
-      // updateFrameView(tpFrame, camera);
-      // tpFrame.shader.setUniformData('uCameraEye', camera.eye);
-      // tpFrame.shader.setUniformData('uModelMat', teapot.modelMat);
-      // tpFrame.shader.setUniformData('uNormalMat', teapot.normalMat);
-      // tpFrame.renderToCanvas(firstRender);
+      const tpFrame = scene.getFrame('teapot');
+      scene.gl.bindTexture(
+          scene.gl.TEXTURE_CUBE_MAP, cubeCamera.texture);
+      updateFrameView(tpFrame, camera);
+      tpFrame.shader.setUniformData('uCameraEye', camera.eye);
+      tpFrame.shader.setUniformData('uModelMat', teapot.modelMat);
+      tpFrame.shader.setUniformData('uNormalMat', teapot.normalMat);
+      tpFrame.renderToCanvas();
     },
   });
 

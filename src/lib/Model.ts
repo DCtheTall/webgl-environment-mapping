@@ -41,13 +41,13 @@ export default class Model {
     this.scaleMatrix = mat4.create();
     this.rotationMatrix = mat4.create();
     this.ambientMaterialColor =
-      (opts && opts.ambientMaterialColor) || DEFAULT_AMBIENT_COLOR;
+        (opts && opts.ambientMaterialColor) || DEFAULT_AMBIENT_COLOR;
     this.lambertianMaterialColor =
-      (opts && opts.lambertianMaterialColor) || WHITE;
+        (opts && opts.lambertianMaterialColor) || WHITE;
     this.specularMaterialColor =
-      (opts && opts.specularMaterialColor) || WHITE;
+        (opts && opts.specularMaterialColor) || WHITE;
     this.textureWeight =
-      (opts && opts.textureWeight) || DEFAULT_TEXTURE_WEIGHT;
+        (opts && opts.textureWeight) || DEFAULT_TEXTURE_WEIGHT;
   }
 
   get indices(): Uint16Array {
@@ -59,14 +59,14 @@ export default class Model {
       mat4.create(),
       this.translationMatrix,
       mat4.multiply(
-        mat4.create(), this.rotationMatrix, this.scaleMatrix),
+          mat4.create(), this.rotationMatrix, this.scaleMatrix),
     );
   }
 
   get normalMat(): mat4 {
     return mat4.transpose(
-      mat4.create(),
-      mat4.invert(mat4.create(), this.modelMat));
+        mat4.create(),
+        mat4.invert(mat4.create(), this.modelMat));
   }
 
   get normals(): Float32Array {
@@ -105,17 +105,17 @@ export default class Model {
     if (mesh.textures) {
       const maxTextureVal = Math.max(...mesh.textures, 1);
       this._texCoords = new Float32Array(
-        mesh.textures.map((val: number) => (val / maxTextureVal)));
+          mesh.textures.map((val: number) => (val / maxTextureVal)));
     }
   }
 
   public rotate(rad: number, axis: vec3) {
     this.rotationMatrix =
-      mat4.multiply(
-        mat4.create(),
-        mat4.fromRotation(mat4.create(), rad, axis),
-        this.rotationMatrix,
-      );
+        mat4.multiply(
+          mat4.create(),
+          mat4.fromRotation(mat4.create(), rad, axis),
+          this.rotationMatrix,
+        );
   }
 
   public scale(s: number) {
