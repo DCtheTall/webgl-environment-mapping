@@ -24,6 +24,7 @@ void main() {
   float blinnPhong = pow(dot(halfVec, normalize(v_Normal)), 300.0);
 
   vec3 color = u_AmbientMaterialColor * AMBIENT_LIGHT_COLOR;
+
   color += lambertian * u_LambertianMaterialColor * LAMBERTIAN_LIGHT_COLOR;
   color += blinnPhong * u_SpecularMaterialColor * SPECULAR_LIGHT_COLOR;
 

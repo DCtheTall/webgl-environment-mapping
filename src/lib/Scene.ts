@@ -52,7 +52,7 @@ export default class Scene {
     return this.textures[key];
   }
 
-  public getRenderFrame(key: string): Frame {
+  public getFrame(key: string): Frame {
     return this.frames[key];
   }
 
@@ -63,22 +63,6 @@ export default class Scene {
 
   public getIsAnimating(): boolean {
     return this.isAnimating;
-  }
-
-  public async loadCubeTexture(key: string, cubeTextureUrls: CubeFaces<string>) {
-    const cubeTexture = <CubeTexture>{
-      'x+': null, 'x-': null,
-      'y+': null, 'y-': null,
-      'z+': null, 'z-': null,
-    };
-    await Promise.all(
-      Object.keys(cubeTextureUrls).map(
-        k => new Promise((resolve: AnyFunc) => {
-          const img = cubeTexture[k] = new Image();
-          img.src = cubeTextureUrls[k];
-          img.onload = resolve;
-        })));
-    this.initCubeTexture(key, cubeTexture);
   }
 
   public init2DTexture(
@@ -118,6 +102,22 @@ export default class Scene {
     });
 
     this.textures[key] = texture;
+  }
+
+  public async loadCubeTexture(key: string, cubeTextureUrls: CubeFaces<string>) {
+    const cubeTexture = <CubeTexture>{
+      'x+': null, 'x-': null,
+      'y+': null, 'y-': null,
+      'z+': null, 'z-': null,
+    };
+    await Promise.all(
+      Object.keys(cubeTextureUrls).map(
+        k => new Promise((resolve: AnyFunc) => {
+          const img = cubeTexture[k] = new Image();
+          img.src = cubeTextureUrls[k];
+          img.onload = resolve;
+        })));
+    this.initCubeTexture(key, cubeTexture);
   }
 
   public setFrame(

@@ -20,10 +20,13 @@ export const DEFAULT_EYE = vec3.fromValues(0, 0, 6);
 export const DEFAULT_UP = vec3.fromValues(0, 1, 0);
 
 
+export const CUBES_FRAGMENT_SHADER =
+    <string>require('../shaders/cube-fragment.glsl');
 export const SKYBOX_FRAGMENT_SHADER =
-  <string>require('../shaders/skybox-fragment.glsl');
+    <string>require('../shaders/skybox-fragment.glsl');
 export const SKYBOX_VERTEX_SHADER =
-  <string>require('../shaders/skybox-vertex.glsl');
-export const VERTEX_SHADER = require('../shaders/vertex.glsl');
-export const CUBES_FRAGMENT_SHADER = require('../shaders/cube-fragment.glsl');
+    <string>require('../shaders/skybox-vertex.glsl');
+export const TEAPOT_FRAGMENT_SHADER =
+    <string>require('../shaders/teapot-fragment.glsl');
+export const VERTEX_SHADER = <string>require('../shaders/vertex.glsl');
 

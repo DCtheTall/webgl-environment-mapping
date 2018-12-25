@@ -110,7 +110,7 @@ export default class Frame {
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
   }
 
-  private render(
+  public render(
     frameBuffer: WebGLFramebuffer,
     renderBuffer: WebGLRenderbuffer,
     firstRender = true,

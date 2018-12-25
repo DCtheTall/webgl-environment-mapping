@@ -5,29 +5,105 @@ import { CubeFaces } from './Cube';
 
 
 export default class CubeCamera {
-  public readonly cameras: CubeFaces<Camera>;
+  private _texture: WebGLTexture;
+  private cameras: CubeFaces<Camera>;
+  private frameBuffers: CubeFaces<WebGLFramebuffer>;
+  private glCubeFaces: CubeFaces<number>;
+  private renderBuffers: CubeFaces<WebGLRenderbuffer>;
 
   constructor(
+    private gl: WebGLRenderingContext,
     private position: vec3,
   ) {
+    this._texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, this._texture);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     this.cameras = {
       'x+': new Camera(
           position, vec3.fromValues(1, 0, 0), vec3.fromValues(0, 1, 0)),
       'x-': new Camera(
-          position, vec3.fromValues(1, 0, 0), vec3.fromValues(0, 1, 0)),
+          position, vec3.fromValues(-1, 0, 0), vec3.fromValues(0, 1, 0)),
       'y+': new Camera(
-          position, vec3.fromValues(1, 0, 0), vec3.fromValues(0, 1, 0)),
+          position, vec3.fromValues(0, 1, 0), vec3.fromValues(0, 1, 0)),
       'y-': new Camera(
-          position, vec3.fromValues(1, 0, 0), vec3.fromValues(0, 1, 0)),
+          position, vec3.fromValues(0, -1, 0), vec3.fromValues(0, 1, 0)),
       'z+': new Camera(
-          position, vec3.fromValues(1, 0, 0), vec3.fromValues(0, 1, 0)),
+          position, vec3.fromValues(0, 0, 1), vec3.fromValues(0, 1, 0)),
       'z-': new Camera(
-          position, vec3.fromValues(1, 0, 0), vec3.fromValues(0, 1, 0)),
+          position, vec3.fromValues(1, 0, -1), vec3.fromValues(0, 1, 0)),
+    };
+    this.frameBuffers = {
+      'x+': gl.createFramebuffer(),
+      'x-': gl.createFramebuffer(),
+      'y+': gl.createFramebuffer(),
+      'y-': gl.createFramebuffer(),
+      'z+': gl.createFramebuffer(),
+      'z-': gl.createFramebuffer(),
+    };
+    this.gl = gl;
+    this.glCubeFaces = {
+      'x+': gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+      'x-': gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+      'y+': gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+      'y-': gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+      'z+': gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+      'z-': gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+    };
+    this.renderBuffers = {
+      'x+': gl.createRenderbuffer(),
+      'x-': gl.createRenderbuffer(),
+      'y+': gl.createRenderbuffer(),
+      'y-': gl.createRenderbuffer(),
+      'z+': gl.createRenderbuffer(),
+      'z-': gl.createRenderbuffer(),
     };
     Object.keys(this.cameras).forEach((key: string) => {
       this.cameras[key].fov = Math.PI / 2;
       this.cameras[key].farPlane = 21;
+      this.gl.texImage2D(
+        this.glCubeFaces[key],
+        0,
+        this.gl.RGBA,
+        128,
+        128,
+        0,
+        this.gl.RGBA,
+        this.gl.UNSIGNED_BYTE,
+        null,
+      );
     });
+  }
+
+  get texture(): WebGLTexture {
+    return this._texture;
+  }
+
+  public renderTexture(
+    callback: (
+      fBuffer: WebGLFramebuffer,
+      rBuffer: WebGLRenderbuffer,
+      camera: Camera,
+    ) => void,
+  ) {
+    for (const key of Object.keys(this.cameras)) {
+      const fBuffer = this.frameBuffers[key];
+      const rBuffer = this.renderBuffers[key];
+
+      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, fBuffer);
+      this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, rBuffer);
+      this.gl.renderbufferStorage(
+          this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, 128, 128);
+      this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER,
+        this.gl.COLOR_ATTACHMENT0, this.glCubeFaces[key], this._texture, 0);
+      this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER,
+          this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, rBuffer);
+      this.gl.viewport(0, 0, 128, 128);
+      this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+      callback(fBuffer, rBuffer, this.cameras[key]);
+    }
   }
 
   public translate(dx: number | vec3, dy?: number, dz?: number): void {
@@ -40,24 +116,5 @@ export default class CubeCamera {
 
     Object.keys(this.cameras).forEach(
         (key: string) => this.cameras[key].setEye(this.position));
-  }
-
-  public rotate(rad: number, axis: vec3): void {
-    const rotationMatrix = mat4.fromRotation(mat4.create(), rad, axis);
-    let normalRotationMatrix = mat4.invert(mat4.create(), rotationMatrix);
-
-    normalRotationMatrix = mat4.transpose(mat4.create(), normalRotationMatrix);
-    Object.keys(this.cameras).forEach((key: string) => {
-      const at3 = this.cameras[key].at;
-      const up3 = this.cameras[key].up;
-
-      let at4 = vec4.fromValues(at3[0], at3[1], at3[2], 1);
-      let up4 = vec4.fromValues(up3[0], up3[1], up3[2], 1);
-
-      at4 = vec4.transformMat4(vec4.create(), at4, rotationMatrix);
-      up4 = vec4.transformMat4(vec4.create(), up4, normalRotationMatrix);
-      this.cameras[key].setAt(at4[0], at4[1], at4[2]);
-      this.cameras[key].setUp(up4[0], up4[1], up4[2]);
-    });
   }
 }

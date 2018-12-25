@@ -22,7 +22,7 @@ export interface ModelOptions {
 
 
 export default class Model {
-  private position: vec3;
+  private _position: vec3;
   private scaleMatrix: mat4;
   private rotationMatrix: mat4;
 
@@ -37,7 +37,7 @@ export default class Model {
   public readonly textureWeight: number;
 
   constructor(opts?: ModelOptions) {
-    this.position = DEFAULT_POSITION;
+    this._position = DEFAULT_POSITION;
     this.scaleMatrix = mat4.create();
     this.rotationMatrix = mat4.create();
     this.ambientMaterialColor =
@@ -73,6 +73,10 @@ export default class Model {
     return this._normals;
   }
 
+  get position(): vec3 {
+    return this._position;
+  }
+
   get textureCoords(): Float32Array {
     return this._texCoords;
   }
@@ -82,7 +86,7 @@ export default class Model {
       1, 0, 0, 0,
       0, 1, 0, 0,
       0, 0, 1, 0,
-      this.position[0], this.position[1], this.position[2], 1
+      this._position[0], this._position[1], this._position[2], 1,
     );
   }
 
@@ -91,14 +95,18 @@ export default class Model {
   }
 
   public async loadObjFile(url: string) {
-    const { data } = await axios.get(url);
-    const mesh = new Mesh(data);
-    const maxTextureVal = Math.max.apply(null, ...mesh.textures, 1);
+    const res = await axios.get(url);
+    const mesh = new Mesh(res.data);
 
     this._vertices = new Float32Array(mesh.vertices);
     this._normals = new Float32Array(mesh.vertexNormals);
-    this._texCoords = new Float32Array(mesh.textures.map((val: number) => val / maxTextureVal));
     this._indices = new Uint16Array(mesh.indices);
+
+    if (mesh.textures) {
+      const maxTextureVal = Math.max(...mesh.textures, 1);
+      this._texCoords = new Float32Array(
+        mesh.textures.map((val: number) => (val / maxTextureVal)));
+    }
   }
 
   public rotate(rad: number, axis: vec3) {
@@ -121,9 +129,10 @@ export default class Model {
 
   public setPosition(x: number | vec3, y?: number, z?: number) {
     if (typeof x === 'number') {
-      this.position = vec3.add(vec3.create(), vec3.fromValues(x, y, z), this.position);
+      this._position = vec3.add(
+          vec3.create(), vec3.fromValues(x, y, z), this._position);
     } else {
-      this.position = x;
+      this._position = x;
     }
   }
 

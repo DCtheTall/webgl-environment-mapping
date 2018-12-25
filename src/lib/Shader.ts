@@ -212,8 +212,17 @@ export default class Shader {
     });
   }
 
-  public setAttributeData(attrbuteName: string, data: number | number[] | Float32Array) {
-    this.attributes[attrbuteName].data = data;
+  public setAttributeData(
+    attrbuteName: string,
+    data: number | number[] | Float32Array,
+    indices?: Uint16Array,
+  ) {
+    const attr = this.attributes[attrbuteName];
+    attr.data = data;
+    if (indices) {
+      attr.indices = indices;
+      if (!attr.indicesBuffer) attr.indicesBuffer = this.gl.createBuffer();
+    }
   }
 
   public setUniformData(uniformName: string, data: number | number[] | mat4 | Float32Array) {
