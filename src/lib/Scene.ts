@@ -73,14 +73,19 @@ export default class Scene {
 
     this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
     this.gl.texImage2D(
-      this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, src);
+        this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, src);
+
     if (Scene.isPowerOfTwo(src.width) && Scene.isPowerOfTwo(src.height)) {
       this.gl.generateMipmap(this.gl.TEXTURE_2D);
     } else {
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+      this.gl.texParameteri(
+          this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+      this.gl.texParameteri(
+          this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+      this.gl.texParameteri(
+          this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+      this.gl.texParameteri(
+          this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
     }
     this.textures[key] = texture;
     this.gl.bindTexture(this.gl.TEXTURE_2D, null);
@@ -122,10 +127,9 @@ export default class Scene {
 
   public setFrame(
     key: string,
-    renderFrame: Frame | ((gl: WebGLRenderingContext) => Frame),
+    frame: Frame | ((gl: WebGLRenderingContext) => Frame),
   ) {
-    if (typeof renderFrame === 'function') this.frames[key] = renderFrame(this.gl);
-    else this.frames[key] = renderFrame;
+    this.frames[key] = typeof frame === 'function' ? frame(this.gl) : frame;
   }
 
   public toggleAnimation() {
@@ -143,7 +147,7 @@ export default class Scene {
     draw = (_: DrawSceneParameters) => { },
   }) {
     this.isAnimating = animate;
-    this.renderFn = () => {
+    this.renderFn = (function renderScene() {
       const now = Date.now();
       if (!this.lastRender) this.firstRender = now;
       if (
@@ -161,12 +165,11 @@ export default class Scene {
       this.rendering = true;
       draw({ animate, firstRender: !this.lastRender });
       this.rendering = false;
-      this.lastRender = now;
+      this.lastRender = Date.now();
       if (this.isAnimating) {
         this.requestAnimFrame = window.requestAnimationFrame(this.renderFn);
       }
-    }
-    this.renderFn = this.renderFn.bind(this);
+    }).bind(this);
     if (animate) {
       window.requestAnimationFrame(this.renderFn);
     } else {

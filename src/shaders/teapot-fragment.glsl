@@ -1,4 +1,4 @@
-precision mediump float;
+precision highp float;
 
 uniform vec3 u_AmbientMaterialColor;
 uniform vec3 u_CameraEye;
@@ -29,7 +29,7 @@ void main() {
 
   color += lambertian * u_LambertianMaterialColor * LAMBERTIAN_LIGHT_COLOR;
   color *= 1. - u_TextureWeight;
-  color += u_TextureWeight * textureCube(u_SamplerCube, texDirection).xyz;
+  color += (.25 + (.75 * lambertian)) * u_TextureWeight * textureCube(u_SamplerCube, texDirection).xyz;
   color += blinnPhong * u_SpecularMaterialColor * SPECULAR_LIGHT_COLOR;
 
   gl_FragColor = vec4(color, 1.);

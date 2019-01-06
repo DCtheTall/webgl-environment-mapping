@@ -172,38 +172,31 @@ export default class Shader {
 
       switch (uniform.type) {
         case ShaderProgramTypes.BOOL:
-          this.gl.uniform1i(
-            uniform.location, <number>uniform.data);
+          this.gl.uniform1i(uniform.location, <number>uniform.data);
           break;
 
         case ShaderProgramTypes.FLOAT:
-          this.gl.uniform1f(
-            uniform.location, <number>uniform.data);
+          this.gl.uniform1f(uniform.location, <number>uniform.data);
           break;
 
         case ShaderProgramTypes.INTEGER:
-          this.gl.uniform1i(
-            uniform.location, <number>uniform.data);
+          this.gl.uniform1i(uniform.location, <number>uniform.data);
           break;
 
         case ShaderProgramTypes.MATRIX4:
-          this.gl.uniformMatrix4fv(
-            uniform.location, false, <number[]>uniform.data);
+          this.gl.uniformMatrix4fv(uniform.location, false, <number[]>uniform.data);
           break;
 
         case ShaderProgramTypes.VECTOR2:
-          this.gl.uniform2fv(
-            uniform.location, <number[]>uniform.data);
+          this.gl.uniform2fv(uniform.location, <number[]>uniform.data);
           break;
 
         case ShaderProgramTypes.VECTOR3:
-          this.gl.uniform3fv(
-            uniform.location, <number[]>uniform.data);
+          this.gl.uniform3fv(uniform.location, <number[]>uniform.data);
           break;
 
         case ShaderProgramTypes.VECTOR4:
-          this.gl.uniform4fv(
-            uniform.location, <number[]>uniform.data);
+          this.gl.uniform4fv(uniform.location, <number[]>uniform.data);
           break;
 
         default:

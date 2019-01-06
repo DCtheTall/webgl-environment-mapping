@@ -138,14 +138,13 @@ function updateFrameView(frame: Frame, camera: Camera) {
 }
 
 
-function drawSkyBox(
+function drawSkybox(
   scene: Scene,
   camera: Camera,
   callback: (f: Frame) => void,
 ) {
   const skyboxFrame = scene.getFrame('skybox');
   updateFrameView(skyboxFrame, camera);
-  scene.gl.activeTexture(scene.gl.TEXTURE0);
   scene.gl.bindTexture(
       scene.gl.TEXTURE_CUBE_MAP, scene.getTexture('skybox'));
   return callback(skyboxFrame);
@@ -167,11 +166,11 @@ function drawCubes(
     cubeFrame.shader.setUniformData('uModelMat', cube.modelMat);
     cubeFrame.shader.setUniformData('uNormalMat', cube.normalMat);
     cubeFrame.shader.setUniformData(
-      'uAmbientMaterialColor', cube.ambientMaterialColor);
+        'uAmbientMaterialColor', cube.ambientMaterialColor);
     cubeFrame.shader.setUniformData(
-      'uLambertianMaterialColor', cube.lambertianMaterialColor);
+        'uLambertianMaterialColor', cube.lambertianMaterialColor);
     cubeFrame.shader.setUniformData(
-      'uSpecularMaterialColor', cube.specularMaterialColor);
+        'uSpecularMaterialColor', cube.specularMaterialColor);
     callback(cubeFrame);
   });
 }
@@ -179,16 +178,16 @@ function drawCubes(
 
 (async function main() {
   const canvas =
-    <HTMLCanvasElement>document.getElementById('canvas');
+      <HTMLCanvasElement>document.getElementById('canvas');
   let sideLength = window.innerWidth >= 600 ? 500 : 250;
   if (window.innerWidth >= 600 && isRetina()) sideLength *= 2;
   canvas.width = canvas.height = sideLength;
 
   const camera = new Camera();
   const scene = new Scene(canvas);
-  const teapot = new Model({ textureWeight: .7 });
+  const teapot = new Model({ textureWeight: .8 });
 
-  // teapot.setPosition(0, -2, 0);
+  teapot.setPosition(0, -2, 0);
   teapot.scale(0.06);
   teapot.rotate(-Math.PI / 2, vec3.fromValues(1, 0, 0));
   await teapot.loadObjFile('/teapot.obj');
@@ -299,7 +298,8 @@ function drawCubes(
       uniforms: {
         uModelMat: {
           locationName: 'u_ModelMat',
-          type: Shader.Types.MATRIX4, // reduce code by making replacing "type" by extending ShaderUniform to abstract types
+          // TODO reduce code by making replacing "type" by extending ShaderUniform to abstract types
+          type: Shader.Types.MATRIX4,
         },
         uNormalMat: {
           locationName: 'u_NormalMat',
@@ -363,7 +363,8 @@ function drawCubes(
       uniforms: {
         uModelMat: {
           locationName: 'u_ModelMat',
-          type: Shader.Types.MATRIX4, // reduce code by making replacing "type" by extending ShaderUniform to abstract types
+          // TODO reduce code by making replacing "type" by extending ShaderUniform to abstract types
+          type: Shader.Types.MATRIX4,
         },
         uNormalMat: {
           locationName: 'u_NormalMat',
@@ -411,30 +412,30 @@ function drawCubes(
   }));
 
   scene.render({
-    animate: true,
+    animate: false,
     draw() {
       iterateCubeOrbits();
-      drawSkyBox(
-          scene, camera,
+      drawSkybox(scene, camera,
           (skybox: Frame) => skybox.renderToCanvas());
-      drawCubes(
-          scene, camera, cubes,
+      drawCubes(scene, camera, cubes,
           (cFrame: Frame) => cFrame.renderToCanvas());
 
       cubeCamera.renderTexture(
-          (fBuffer: WebGLFramebuffer, rBuffer: WebGLRenderbuffer, cam: Camera) => {
-            drawSkyBox(
-                scene, cam,
-                (skybox: Frame) =>
-                    skybox.render(fBuffer, rBuffer));
-            drawCubes(
-                scene, cam, cubes,
-                (cFrame: Frame) => cFrame.render(fBuffer, rBuffer));
+          (
+            fBuffer: WebGLFramebuffer,
+            rBuffer: WebGLRenderbuffer,
+            cam: Camera,
+            width: number,
+            height: number,
+          ) => {
+            drawSkybox(scene, cam,
+                (skybox: Frame) => skybox.render(fBuffer, rBuffer, width, height));
+            drawCubes(scene, cam, cubes,
+                (cFrame: Frame) => cFrame.render(fBuffer, rBuffer, width, height));
           });
 
       const tpFrame = scene.getFrame('teapot');
-      scene.gl.bindTexture(
-          scene.gl.TEXTURE_CUBE_MAP, cubeCamera.texture);
+      scene.gl.bindTexture(scene.gl.TEXTURE_CUBE_MAP, cubeCamera.texture);
       updateFrameView(tpFrame, camera);
       tpFrame.shader.setUniformData('uCameraEye', camera.eye);
       tpFrame.shader.setUniformData('uModelMat', teapot.modelMat);

@@ -309,9 +309,7 @@ export default class Scene {
     });
   }
 
-  private renderEnvironment(_camera?: Camera): void {
-    let camera: Camera;
-    camera = _camera ? _camera : this.camera;
+  private renderEnvironment(camera: Camera = this.camera): void {
     if (this.skyBox) this.renderSkyBox(camera);
     if (this.cubes) this.renderCubes(camera);
   }

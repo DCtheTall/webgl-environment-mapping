@@ -1,5 +1,4 @@
-precision mediump float;
-
+precision highp float;
 
 uniform samplerCube u_SamplerCube;
 

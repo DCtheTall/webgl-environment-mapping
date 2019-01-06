@@ -16,16 +16,22 @@ interface RenderFrameConstructorParams {
 }
 
 
+interface Dimensions {
+  width: number;
+  height: number;
+}
+
+
 export default class Frame {
-  private gl: WebGLRenderingContext;
-  private frameBuffer: WebGLFramebuffer;
-  private renderBuffer: WebGLRenderbuffer;
-  private height: number;
-  private width: number;
-  private nVertices: number;
   private clearBeforeRender: boolean;
-  private mode: number;
   private drawElements: boolean;
+  private frameBuffer: WebGLFramebuffer;
+  private gl: WebGLRenderingContext;
+  private height: number;
+  private mode: number;
+  private nVertices: number;
+  private renderBuffer: WebGLRenderbuffer;
+  private width: number;
 
   public shader: Shader;
   public texture: WebGLTexture;
@@ -53,9 +59,9 @@ export default class Frame {
     this.drawElements = drawElements;
     this.initTexture();
     this.initRenderBuffer();
-    this.renderToCanvas = this.render.bind(this, null, null);
+    this.renderToCanvas = this.render.bind(this, null, null, width, height);
     this.renderToTexture = this.render.bind(
-        this, this.frameBuffer, this.renderBuffer);
+        this, this.frameBuffer, this.renderBuffer, width, height);
   }
 
   private initRenderBuffer() {
@@ -113,6 +119,8 @@ export default class Frame {
   public render(
     frameBuffer: WebGLFramebuffer,
     renderBuffer: WebGLRenderbuffer,
+    width: number,
+    height: number,
     firstRender = true,
   ) {
     this.shader.useProgram();
@@ -122,7 +130,7 @@ export default class Frame {
       this.gl.clearColor.apply(this.gl, CLEAR_COLOR);
       this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     }
-    this.gl.viewport(0, 0, this.width, this.height);
+    this.gl.viewport(0, 0, width, height);
     this.shader.sendAttributes(firstRender);
     this.shader.sendUniforms();
     if (this.drawElements) {
