@@ -1,7 +1,6 @@
 import ShaderData, { ShaderDataOptions } from './ShaderData';
 
 interface ShaderAttributeOptions extends ShaderDataOptions {
-  location?: number;
   indices?: Uint16Array;
   indicesBuffer?: WebGLBuffer;
 }
@@ -14,14 +13,12 @@ class ShaderAttribute extends ShaderData {
   constructor(
     protected readonly locationName: string,
     {
-      location,
       indices,
       indicesBuffer,
       ...opts
     }: ShaderAttributeOptions = {},
   ) {
     super(locationName, opts);
-    this.location = location;
     this.indices = indices;
     this.indicesBuffer = indicesBuffer;
   }
@@ -31,7 +28,7 @@ interface VectorShaderAttributeOptions extends ShaderAttributeOptions {
   data?: number[];
 }
 
-class VectorAttribute extends ShaderAttribute {
+export class Vector2Attribute extends ShaderAttribute {
   protected data: number[] | Float32Array;
 
   constructor(
@@ -39,5 +36,36 @@ class VectorAttribute extends ShaderAttribute {
     opts: VectorShaderAttributeOptions = {},
   ) {
     super(locationName, opts);
+    if (opts.data && opts.data.length !== 2) {
+      throw new Error('Mismatched dimension for vector attribute');
+    }
+  }
+}
+
+export class Vector3Attribute extends ShaderAttribute {
+  protected data: number[] | Float32Array;
+
+  constructor(
+    protected readonly locationName: string,
+    opts: VectorShaderAttributeOptions = {},
+  ) {
+    super(locationName, opts);
+    if (opts.data && opts.data.length !== 3) {
+      throw new Error('Mismatched dimension for vector attribute');
+    }
+  }
+}
+
+export class Vector4Attribute extends ShaderAttribute {
+  protected data: number[] | Float32Array;
+
+  constructor(
+    protected readonly locationName: string,
+    opts: VectorShaderAttributeOptions = {},
+  ) {
+    super(locationName, opts);
+    if (opts.data && opts.data.length !== 4) {
+      throw new Error('Mismatched dimension for vector attribute');
+    }
   }
 }
