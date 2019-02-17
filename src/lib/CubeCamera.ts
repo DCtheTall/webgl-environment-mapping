@@ -21,17 +21,17 @@ export default class CubeCamera {
     this._texture = gl.createTexture();
     this.cameras = {
       'x+': new Camera(
-          position, vec3.fromValues(1, 0, 0), vec3.fromValues(0, -1, 0)),
+          position, vec3.fromValues(1e3, 0, 0), vec3.fromValues(0, -1, 0)),
       'x-': new Camera(
-          position, vec3.fromValues(-1, 0, 0), vec3.fromValues(0, -1, 0)),
+          position, vec3.fromValues(-1e3, 0, 0), vec3.fromValues(0, -1, 0)),
       'y+': new Camera(
-          position, vec3.fromValues(0, 1, 0), vec3.fromValues(0, 0, 1)),
+          position, vec3.fromValues(0, 1e3, 0), vec3.fromValues(0, 0, 1)),
       'y-': new Camera(
-          position, vec3.fromValues(0, -1, 0), vec3.fromValues(0, 0, 1)),
+          position, vec3.fromValues(0, -1e3, 0), vec3.fromValues(0, 0, 1)),
       'z+': new Camera(
-          position, vec3.fromValues(0, 0, 1), vec3.fromValues(0, -1, 0)),
+          position, vec3.fromValues(0, 0, 1e3), vec3.fromValues(0, -1, 0)),
       'z-': new Camera(
-          position, vec3.fromValues(0, 0, -1), vec3.fromValues(0, -1, 0)),
+          position, vec3.fromValues(0, 0, -1e3), vec3.fromValues(0, -1, 0)),
     };
     this.frameBuffers = {
       'x+': gl.createFramebuffer(),
@@ -65,12 +65,11 @@ export default class CubeCamera {
     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
     for (const key of Object.keys(this.cameras)) {
-      const face = this.glCubeFaces[key];
       const cam = this.cameras[key];
       cam.fov = Math.PI / 2;
       cam.farPlane = 30;
       gl.texImage2D(
-        face,
+        this.glCubeFaces[key],
         0,
         gl.RGBA,
         CUBE_CAMERA_TEXTURE_WIDTH,
@@ -109,8 +108,7 @@ export default class CubeCamera {
           this.gl.COLOR_ATTACHMENT0, this.glCubeFaces[key], this._texture, 0);
       this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER,
           this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, rBuffer);
-      callback(this.frameBuffers[key],
-          this.renderBuffers[key], this.cameras[key],
+      callback(fBuffer, rBuffer, this.cameras[key],
           CUBE_CAMERA_TEXTURE_WIDTH, CUBE_CAMERA_TEXTURE_WIDTH);
     }
   }

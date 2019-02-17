@@ -412,7 +412,7 @@ function drawCubes(
   }));
 
   scene.render({
-    animate: false,
+    animate: true,
     draw() {
       iterateCubeOrbits();
       drawSkybox(scene, camera,
