@@ -16,11 +16,11 @@ export default class ShaderData {
     return this.locationName;
   }
 
-  getData() {
+  public getData() {
     return this.data;
   }
 
-  setData(data: number | number[] | Float32Array) {
+  public setData(data: number | number[] | Float32Array) {
     this.data = data;
   }
 }

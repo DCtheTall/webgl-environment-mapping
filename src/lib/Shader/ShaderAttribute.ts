@@ -36,15 +36,45 @@ export class ShaderAttribute extends ShaderData {
   public setLocation(location: number) {
     this.location = location;
   }
+
+  public getBuffer(): WebGLBuffer {
+    return this.buffer;
+  }
+
+  public getLocation(): number {
+    return this.location;
+  }
+
+  public getIndicesBuffer(): WebGLBuffer {
+    return this.indicesBuffer;
+  }
+
+  public getIndices(): Uint16Array {
+    return this.indices;
+  }
+
+  public setIndices(indices: Uint16Array) {
+    this.indices = indices;
+  }
+
+  public hasIndicesBuffer(): boolean {
+    return Boolean(this.indicesBuffer);
+  }
 }
 
 interface VectorShaderAttributeOptions extends ShaderAttributeOptions {
   data?: number[];
 }
 
-export class Vector2Attribute extends ShaderAttribute {
+export class VectorAttribute extends ShaderAttribute {
   protected data: number[] | Float32Array;
 
+  public getData(): number[] | Float32Array {
+    return this.data;
+  }
+}
+
+export class Vector2Attribute extends VectorAttribute {
   constructor(
     protected readonly locationName: string,
     opts: VectorShaderAttributeOptions = {},
@@ -56,9 +86,7 @@ export class Vector2Attribute extends ShaderAttribute {
   }
 }
 
-export class Vector3Attribute extends ShaderAttribute {
-  protected data: number[] | Float32Array;
-
+export class Vector3Attribute extends VectorAttribute {
   constructor(
     protected readonly locationName: string,
     opts: VectorShaderAttributeOptions = {},
@@ -70,9 +98,7 @@ export class Vector3Attribute extends ShaderAttribute {
   }
 }
 
-export class Vector4Attribute extends ShaderAttribute {
-  protected data: number[] | Float32Array;
-
+export class Vector4Attribute extends VectorAttribute {
   constructor(
     protected readonly locationName: string,
     opts: VectorShaderAttributeOptions = {},

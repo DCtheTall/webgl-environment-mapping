@@ -13,6 +13,10 @@ export class ShaderUniform extends ShaderData {
   public setLocation(location: WebGLUniformLocation) {
     this.location = location;
   }
+
+  public getLocation(): WebGLUniformLocation {
+    return this.location;
+  }
 }
 
 interface BooleanUniformOptions extends ShaderDataOptions {
