@@ -1,6 +1,6 @@
 import ShaderData, { ShaderDataOptions } from './ShaderData';
 
-class ShaderUniform extends ShaderData {
+export class ShaderUniform extends ShaderData {
   protected location: WebGLUniformLocation;
 
   constructor(
@@ -8,6 +8,10 @@ class ShaderUniform extends ShaderData {
     opts: ShaderDataOptions = {},
   ) {
     super(locationName, opts);
+  }
+
+  public setLocation(location: WebGLUniformLocation) {
+    this.location = location;
   }
 }
 

@@ -2,10 +2,10 @@ import ShaderData, { ShaderDataOptions } from './ShaderData';
 
 interface ShaderAttributeOptions extends ShaderDataOptions {
   indices?: Uint16Array;
-  indicesBuffer?: WebGLBuffer;
 }
 
-class ShaderAttribute extends ShaderData {
+export class ShaderAttribute extends ShaderData {
+  protected buffer: WebGLBuffer;
   protected location: number;
   protected indices: Uint16Array;
   protected indicesBuffer: WebGLBuffer;
@@ -14,13 +14,27 @@ class ShaderAttribute extends ShaderData {
     protected readonly locationName: string,
     {
       indices,
-      indicesBuffer,
       ...opts
     }: ShaderAttributeOptions = {},
   ) {
     super(locationName, opts);
     this.indices = indices;
-    this.indicesBuffer = indicesBuffer;
+  }
+
+  public setBuffer(buffer: WebGLBuffer) {
+    this.buffer = buffer;
+  }
+
+  public hasIndices(): boolean {
+    return Boolean(this.indices);
+  }
+
+  public setIndicesBuffer(buffer: WebGLBuffer) {
+    this.indicesBuffer = buffer;
+  }
+
+  public setLocation(location: number) {
+    this.location = location;
   }
 }
 

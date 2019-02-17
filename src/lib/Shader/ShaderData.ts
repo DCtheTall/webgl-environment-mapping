@@ -1,18 +1,19 @@
 export interface ShaderDataOptions {
   data?: number | number[] | Float32Array;
-  buffer?: WebGLBuffer;
 }
 
 export default class ShaderData {
   protected data: number | number[] | Float32Array;
-  protected buffer: WebGLBuffer;
 
   constructor(
     protected readonly locationName: string,
-    {data, buffer}: ShaderDataOptions = {},
+    {data}: ShaderDataOptions = {},
   ) {
     this.data = data;
-    this.buffer = buffer;
+  }
+
+  public getLocationName(): string {
+    return this.locationName;
   }
 
   getData() {
