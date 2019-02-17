@@ -4,7 +4,7 @@ export class ShaderUniform extends ShaderData {
   protected location: WebGLUniformLocation;
 
   constructor(
-    protected readonly locationName: string,
+    public readonly locationName: string,
     opts: ShaderDataOptions = {},
   ) {
     super(locationName, opts);
@@ -27,7 +27,7 @@ export class BooleanUniform extends ShaderUniform {
   protected data: number;
 
   constructor(
-    protected readonly locationName: string,
+    public readonly locationName: string,
     opts: BooleanUniformOptions = {},
   ) {
     super(locationName, opts);
@@ -42,7 +42,7 @@ export class FloatUniform extends ShaderUniform {
   protected data: number;
 
   constructor(
-    protected readonly locationName: string,
+    public readonly locationName: string,
     opts: FloatUniformOptions = {},
   ) {
     super(locationName, opts);
@@ -57,7 +57,7 @@ export class IntegerUniform extends ShaderUniform {
   protected data: number;
 
   constructor(
-    protected readonly locationName: string,
+    public readonly locationName: string,
     opts: IntegerUniformOptions = {},
   ) {
     super(locationName, opts);
@@ -70,7 +70,7 @@ interface MatrixUniformOptions extends ShaderDataOptions {
 
 export class Matrix4Uniform extends ShaderUniform {
   constructor(
-    protected readonly locationName: string,
+    public readonly locationName: string,
     opts: MatrixUniformOptions = {},
   ) {
     super(locationName, opts);
@@ -86,7 +86,7 @@ interface VectorUniform extends ShaderDataOptions {
 
 export class Vector2Uniform extends ShaderUniform {
   constructor(
-    protected readonly locationName: string,
+    public readonly locationName: string,
     opts: VectorUniform = {},
   ) {
     super(locationName, opts);
@@ -98,7 +98,7 @@ export class Vector2Uniform extends ShaderUniform {
 
 export class Vector3Uniform extends ShaderUniform {
   constructor(
-    protected readonly locationName: string,
+    public readonly locationName: string,
     opts: VectorUniform = {},
   ) {
     super(locationName, opts);
@@ -110,7 +110,7 @@ export class Vector3Uniform extends ShaderUniform {
 
 export class Vector4Uniform extends ShaderUniform {
   constructor(
-    protected readonly locationName: string,
+    public readonly locationName: string,
     opts: VectorUniform = {},
   ) {
     super(locationName, opts);

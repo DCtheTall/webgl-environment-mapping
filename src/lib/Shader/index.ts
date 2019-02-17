@@ -27,11 +27,12 @@ interface ShaderUniforms {
 
 export default class Shader {
   private readonly shaderSources: string[] = [];
-  private program_: WebGLProgram;
+  private program: WebGLProgram;
 
   constructor(
     vertexShader: string,
     fragmentShader: string,
+    public readonly nVertices: number,
     private readonly attributes: ShaderAttributes = {},
     private readonly uniforms: ShaderUniforms = {},
   ) {
@@ -39,8 +40,8 @@ export default class Shader {
     this.shaderSources[WebGLRenderingContext.FRAGMENT_SHADER] = fragmentShader;
   }
 
-  get program() {
-    return this.program_;
+  public getProgram() {
+    return this.program;
   }
 
   public initShaderProgram(gl: WebGLRenderingContext) {
@@ -56,18 +57,18 @@ export default class Shader {
     gl.attachShader(program, shaders[gl.VERTEX_SHADER]);
     gl.attachShader(program, shaders[gl.FRAGMENT_SHADER]);
     gl.linkProgram(program);
-    this.program_ = program;
+    this.program = program;
     Object.keys(this.attributes).forEach((key: string) => {
       const attribute = this.attributes[key];
       attribute.setBuffer(gl.createBuffer());
       if (attribute.hasIndices()) {
         attribute.setIndicesBuffer(gl.createBuffer());
       }
-      attribute.setLocation(gl.getAttribLocation(this.program_, attribute.getLocationName()));
+      attribute.setLocation(gl.getAttribLocation(this.program, attribute.locationName));
     });
     Object.keys(this.uniforms).forEach((key: string) => {
       const uniform = this.uniforms[key];
-      uniform.setLocation(gl.getUniformLocation(this.program_, uniform.getLocationName()));
+      uniform.setLocation(gl.getUniformLocation(this.program, uniform.locationName));
     });
   }
 
@@ -82,24 +83,24 @@ export default class Shader {
     return shader;
   }
 
-  public sendAttributes(gl: WebGLRenderingContext, firstRender: boolean) {
+  public sendAttributes(gl: WebGLRenderingContext) {
     Object.keys(this.attributes).forEach((key: string) => {
       const attribute = this.attributes[key];
 
       switch (attribute.constructor) {
         case Vector2Attribute:
           this.sendVectorAttribute(
-            gl, 2, <Vector2Attribute>attribute, firstRender);
+            gl, 2, <Vector2Attribute>attribute);
           break;
 
         case Vector3Attribute:
           this.sendVectorAttribute(
-            gl, 3, <Vector3Attribute>attribute, firstRender);
+            gl, 3, <Vector3Attribute>attribute);
           break;
 
         case Vector4Attribute:
           this.sendVectorAttribute(
-            gl, 4, <Vector4Attribute>attribute, firstRender);
+            gl, 4, <Vector4Attribute>attribute);
           break;
 
         default:
@@ -112,21 +113,18 @@ export default class Shader {
     gl: WebGLRenderingContext,
     dimension: number,
     attribute: VectorAttribute,
-    firstRender: boolean,
   ) {
     gl.bindBuffer(gl.ARRAY_BUFFER, attribute.getBuffer());
     const location = attribute.getLocation();
     gl.enableVertexAttribArray(location);
     gl.vertexAttribPointer(
       location, dimension, gl.FLOAT, false, 0, 0);
-    if (firstRender) {
+    gl.bufferData(
+      gl.ARRAY_BUFFER, new Float32Array(attribute.getData()), gl.STATIC_DRAW);
+    if (attribute.hasIndices()) {
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, attribute.getIndicesBuffer());
       gl.bufferData(
-        gl.ARRAY_BUFFER, new Float32Array(attribute.getData()), gl.STATIC_DRAW);
-      if (attribute.hasIndices()) {
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, attribute.getIndicesBuffer());
-        gl.bufferData(
-          gl.ELEMENT_ARRAY_BUFFER, attribute.getIndices(), gl.DYNAMIC_DRAW)
-      }
+        gl.ELEMENT_ARRAY_BUFFER, attribute.getIndices(), gl.DYNAMIC_DRAW);
     }
   }
 

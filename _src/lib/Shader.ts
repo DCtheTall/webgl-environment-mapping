@@ -124,6 +124,7 @@ export default class Shader {
       firstRender = true,
     } = {},
   ): void {
+    if (!firstRender) return;
     const {
       data,
       buffer,
@@ -136,7 +137,7 @@ export default class Shader {
     this.gl.enableVertexAttribArray(location);
     this.gl.vertexAttribPointer(
       location, dimension, this.gl.FLOAT, false, 0, 0);
-    if (firstRender) {
+    // if (firstRender) {
       this.gl.bufferData(
         this.gl.ARRAY_BUFFER, new Float32Array(<number[]>data), this.gl.STATIC_DRAW);
       if (attribute.indices) {
@@ -144,7 +145,7 @@ export default class Shader {
         this.gl.bufferData(
           this.gl.ELEMENT_ARRAY_BUFFER, attribute.indices, this.gl.DYNAMIC_DRAW)
       }
-    }
+    // }
   }
 
   public sendAttributes(firstRender: boolean) {

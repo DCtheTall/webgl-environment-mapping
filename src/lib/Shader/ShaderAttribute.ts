@@ -11,7 +11,7 @@ export class ShaderAttribute extends ShaderData {
   protected indicesBuffer: WebGLBuffer;
 
   constructor(
-    protected readonly locationName: string,
+    public readonly locationName: string,
     {
       indices,
       ...opts
@@ -76,7 +76,7 @@ export class VectorAttribute extends ShaderAttribute {
 
 export class Vector2Attribute extends VectorAttribute {
   constructor(
-    protected readonly locationName: string,
+    public readonly locationName: string,
     opts: VectorShaderAttributeOptions = {},
   ) {
     super(locationName, opts);
@@ -88,7 +88,7 @@ export class Vector2Attribute extends VectorAttribute {
 
 export class Vector3Attribute extends VectorAttribute {
   constructor(
-    protected readonly locationName: string,
+    public readonly locationName: string,
     opts: VectorShaderAttributeOptions = {},
   ) {
     super(locationName, opts);
@@ -100,7 +100,7 @@ export class Vector3Attribute extends VectorAttribute {
 
 export class Vector4Attribute extends VectorAttribute {
   constructor(
-    protected readonly locationName: string,
+    public readonly locationName: string,
     opts: VectorShaderAttributeOptions = {},
   ) {
     super(locationName, opts);
