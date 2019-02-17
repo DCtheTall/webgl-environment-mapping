@@ -26,3 +26,18 @@ class ShaderAttribute extends ShaderData {
     this.indicesBuffer = indicesBuffer;
   }
 }
+
+interface VectorShaderAttributeOptions extends ShaderAttributeOptions {
+  data?: number[];
+}
+
+class VectorAttribute extends ShaderAttribute {
+  protected data: number[] | Float32Array;
+
+  constructor(
+    protected readonly locationName: string,
+    opts: VectorShaderAttributeOptions = {},
+  ) {
+    super(locationName, opts);
+  }
+}

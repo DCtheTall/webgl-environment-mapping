@@ -18,4 +18,8 @@ export default class ShaderData {
   getData() {
     return this.data;
   }
+
+  setData(data: number | number[] | Float32Array) {
+    this.data = data;
+  }
 }
